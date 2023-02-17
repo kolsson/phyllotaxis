@@ -1,0 +1,17 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+
+  display: flex;
+  height: 100%;
+
+  /* uncomment once we are done debugging */
+  /* align-items: center;
+  justify-content: center; */
+}
+
+/* tweakpane label width */
+.tp-dfwv {
+  min-width: 310px;
+}

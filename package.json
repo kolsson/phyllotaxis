@@ -1,0 +1,18 @@
+{
+  "name": "p5js-template",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^4.1.1"
+  },
+  "dependencies": {
+    "p5": "^1.5.0",
+    "tone": "^14.7.77",
+    "tweakpane": "^3.1.4",
+    "voronoi": "^1.0.0"
+  }
+}

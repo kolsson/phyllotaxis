@@ -1,8 +1,13 @@
 import { Pane } from "tweakpane";
 import { presets } from "./presets";
 
-export function tp(params) {
-  const pane = new Pane();
+let pane;
+let pauseUpdates = false;
+let redrawCallback;
+
+export default function tp(params, _redrawCalback) {
+  pane = new Pane();
+  redrawCallback = _redrawCalback;
 
   const presetOptions = presets.map((p, i) => ({
     text: `Preset ${i + 1}`,
@@ -18,7 +23,10 @@ export function tp(params) {
   });
 
   presetsList.on("change", (e) => {
+    pauseUpdates = true;
     pane.importPreset({ ...params, ...presets[e.value] });
+    pauseUpdates = false;
+    redrawCallback();
   });
 
   const exportButton = pane.addButton({
@@ -36,6 +44,14 @@ export function tp(params) {
 
   // monitors
   pane.addMonitor(params, "actualCellCount", {});
+  pane.addSeparator();
+
+  // ui
+  pane.addInput(params, "scale", {
+    min: 0.5,
+    max: 10,
+    step: 0.1,
+  });
   pane.addSeparator();
 
   // core params
@@ -73,6 +89,8 @@ export function tp(params) {
 
   // debugging
   pane.addInput(params, "showCellClipCircles", { label: "Show Clip Circles" });
+  pane.addInput(params, "showCells", { label: "Show Cells" });
+  pane.addInput(params, "showPrimMst", { label: "Show Prim MST" });
   pane.addInput(params, "showCellSites", { label: "Show Cell Sites" });
   pane.addInput(params, "showCellText", { label: "Show Cell Text" });
   pane.addInput(params, "textSize", {
@@ -80,6 +98,11 @@ export function tp(params) {
     min: 8,
     max: 14,
     step: 0.25,
+  });
+
+  // updates
+  pane.on("change", () => {
+    if (!pauseUpdates) redrawCallback();
   });
 
   return pane;

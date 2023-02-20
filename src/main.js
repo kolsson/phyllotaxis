@@ -3,7 +3,8 @@ import p5 from "p5";
 import * as Tone from "tone";
 import * as Voronoi from "voronoi/rhill-voronoi-core";
 
-import { tp } from "./tweakpane";
+import tweakpane from "./tweakpane";
+import prim from "./prim";
 
 const sketch = window;
 window.p5 = p5;
@@ -13,6 +14,7 @@ let xl, xr, yt, yb;
 
 // cells
 let cellPoints, vCells;
+let primMst;
 
 const v = new Voronoi();
 let vd;
@@ -25,6 +27,9 @@ const params = {
   // monitors
   actualCellCount: 300,
 
+  // ui
+  scale: 1,
+
   // core params
   cellCount: 300,
   startCell: 1,
@@ -36,21 +41,13 @@ const params = {
   cellClipR: 0,
 
   // debugging
-  showCellSites: false,
   showCellClipCircles: false,
+  showCells: true,
+  showPrimMst: true,
+  showCellSites: false,
   showCellText: false,
   textSize: 10,
 };
-
-// ----------------------------------------------------------------------------
-// tweakpane
-// ----------------------------------------------------------------------------
-
-const pane = tp(params);
-
-pane.on("change", () => {
-  redraw();
-});
 
 // ----------------------------------------------------------------------------
 // sketch: setup
@@ -176,8 +173,8 @@ const computeCells = () => {
   // find a circle A that encompasses remaining cells
   car = furthestDistofCells(vCells, 0, 0);
 
-  // shrink the circle slightly, and filter again
-  carr = car - params.cellClipR; // magic number, for now
+  // shrink the circle and filter again
+  carr = car - params.cellClipR;
 
   const tvc = vCells.filter((vc) =>
     vc.points.every((p) => dist(0, 0, p.x, p.y) < carr)
@@ -186,7 +183,7 @@ const computeCells = () => {
   // find another circle B that encompasses remaining cells
   cbr = furthestDistofCells(tvc, 0, 0);
 
-  // clip cells using circleB (do not create additional points)
+  // clip cells using circleB
   vCells = vCells.map((vc) => {
     const plen = vc.points.length;
     const points = [];
@@ -200,7 +197,9 @@ const computeCells = () => {
 
         points.push(ep);
       } else {
-        // we intersect, generate two points -- this is very naive
+        // we intersect, generate two points -- this is very naive and assumes
+        // each cell has only 2 points of intersection with the circle
+
         points.push(lineSegmentCircleIntersect(sp, ep, cbr));
 
         const np = i === plen - 1 ? vc.points[0] : vc.points[i + 1];
@@ -211,7 +210,20 @@ const computeCells = () => {
     return { site: vc.site, points };
   });
 
-  // sort cells starting at cell closest to the center, then moving clockwise to adjacent cells
+  // run prim's algorithm starting at ?? (closest cell to center)
+
+  const graph = [];
+  const vclen = vCells.length;
+
+  for (let i = 0; i < vclen - 1; i++) {
+    const { x: sx, y: sy } = vCells[i].site;
+    for (let j = i + 1; j < vclen; j++) {
+      const { x: ex, y: ey } = vCells[j].site;
+      graph.push([i, j, dist(sx, sy, ex, ey)]);
+    }
+  }
+
+  primMst = prim(graph, vclen);
 
   // update our monitor
   params.actualCellCount = vCells.length;
@@ -222,27 +234,29 @@ const computeCells = () => {
 // ----------------------------------------------------------------------------
 
 const drawCells = () => {
-  // text (for debugging)
-  textSize(params.textSize);
-  const textMiddle = params.textSize / 2 - textAscent() * 0.8; // magic number, font specific
-
   // begin
   translate(width / 2, height / 2);
+  scale(params.scale);
+  strokeWeight(1 / params.scale);
 
-  // cell points (including those removed from the voronoi diagram)
-  // for (const p of cellPoints) {
+  // text (for debugging)
+  const ts = params.textSize / params.scale;
+  textSize(ts);
+  const textMiddle = ts / 2 - textAscent() * 0.8; // magic number, font specific
+
+  // all cell sites (including those removed from the voronoi diagram)
+  // cellPoints.forEach((p, i) => {
   //   point(p.x, p.y);
   //   ellipse(p.x, p.y, cellSize, cellSize);
-  // }
+  //   text(i, p.x, p.y - textMiddle);
+  // });
 
-  // voronoi cells
   vCells.forEach((vc, i) => {
     // site
 
     const { x, y } = vc.site;
 
     if (params.showCellSites) {
-      // point(x, y);
       ellipse(x, y, params.cellSize, params.cellSize);
     }
 
@@ -250,13 +264,25 @@ const drawCells = () => {
       text(i, x, y - textMiddle);
     }
 
-    // voronoi points
+    // voronoi boundaries
 
-    beginShape();
-    for (const p of vc.points) {
-      vertex(p.x, p.y);
+    if (params.showCells) {
+      beginShape();
+      for (const p of vc.points) {
+        vertex(p.x, p.y);
+      }
+      endShape(CLOSE);
     }
-    endShape(CLOSE);
+
+    // prim tree
+
+    if (params.showPrimMst && primMst?.length > 0) {
+      primMst.forEach((e) => {
+        const { x: sx, y: sy } = vCells[e[0]].site;
+        const { x: ex, y: ey } = vCells[e[1]].site;
+        line(sx, sy, ex, ey);
+      });
+    }
   });
 
   // debug clip circles
@@ -268,13 +294,23 @@ const drawCells = () => {
 };
 
 // ----------------------------------------------------------------------------
+// tweakpane
+// ----------------------------------------------------------------------------
+
+const _redraw = () => {
+  redraw();
+};
+
+const pane = tweakpane(params, _redraw);
+
+// ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 
 // test synthesizer if we are using audio
 
 // test synthesizer
-let toneStarted = false;
-let synth;
+// let toneStarted = false;
+// let synth;
 
 // sketch.mousePressed = async () => {
 //   if (!toneStarted) {

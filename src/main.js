@@ -3,8 +3,10 @@ import p5 from "p5";
 import * as Tone from "tone";
 import * as Voronoi from "voronoi/rhill-voronoi-core";
 
-import tweakpane from "./tweakpane";
-import prim from "./prim";
+import tweakpane from "./helpers/tweakpane";
+import { lineSegmentCircleIntersect } from "./helpers/intersect";
+import { furthestDistOfCells, voronoiGetSite } from "./helpers/voronoi";
+import prim from "./helpers/prim";
 
 const sketch = window;
 window.p5 = p5;
@@ -14,6 +16,8 @@ let xl, xr, yt, yb;
 
 // cells
 let cellPoints, vCells;
+let selectedVCellIndex = -1;
+let overVCellIndex = -1;
 let primMst;
 
 const v = new Voronoi();
@@ -50,6 +54,18 @@ const params = {
 };
 
 // ----------------------------------------------------------------------------
+// tweakpane callbacks
+// ----------------------------------------------------------------------------
+
+const _compute = () => computeCells();
+const _redraw = () => redraw();
+const _didLoadPreset = () => {
+  selectedVCellIndex = -1;
+  computeCells();
+  redraw();
+};
+
+// ----------------------------------------------------------------------------
 // sketch: setup
 // ----------------------------------------------------------------------------
 
@@ -66,12 +82,16 @@ sketch.setup = () => {
   textFont("Helvetica Neue Light");
   textAlign(CENTER);
 
-  stroke(0);
+  // defaults
+  stroke(92);
   noFill();
-  // noSmooth();
-
   angleMode(DEGREES);
 
+  // build our tweakpane
+  tweakpane(params, _compute, _redraw, _didLoadPreset);
+
+  // start
+  computeCells();
   noLoop();
 };
 
@@ -80,51 +100,8 @@ sketch.setup = () => {
 // ----------------------------------------------------------------------------
 
 sketch.draw = () => {
-  background(245);
-
-  computeCells();
+  background(255);
   drawCells();
-};
-
-// ----------------------------------------------------------------------------
-// given a cell / cells find the furthest distance from a given point
-// ----------------------------------------------------------------------------
-
-const furthestDistOfCell = (cell, x, y) =>
-  cell.points.reduce((prev, curr) => max(prev, dist(x, y, curr.x, curr.y)), 0);
-
-const furthestDistofCells = (cells, x, y) =>
-  cells.reduce((prev, curr) => max(prev, furthestDistOfCell(curr, x, y)), 0);
-
-// ----------------------------------------------------------------------------
-// find the intersection between a line segment and a circle
-// return the intersection closest to the starting point
-// input order matters!
-// https://stackoverflow.com/questions/23016676/line-segment-and-circle-intersection
-// ----------------------------------------------------------------------------
-
-const lineSegmentCircleIntersect = (sp, ep, r, cx = 0, cy = 0) => {
-  const dx = ep.x - sp.x;
-  const dy = ep.y - sp.y;
-
-  const A = dx * dx + dy * dy;
-  const B = 2 * (dx * (sp.x - cx) + dy * (sp.y - cy));
-  const C = (sp.x - cx) * (sp.x - cx) + (sp.y - cy) * (sp.y - cy) - r * r;
-  const det = B * B - 4 * A * C;
-
-  const t1 = (-B + sqrt(det)) / (2 * A);
-  const t2 = (-B - sqrt(det)) / (2 * A);
-  const i1 = {
-    x: sp.x + t1 * dx,
-    y: sp.y + t1 * dy,
-  };
-  const i2 = {
-    x: sp.x + t2 * dx,
-    y: sp.y + t2 * dy,
-  };
-
-  // use intersection closest to start of line
-  return dist(sp.x, sp.y, i1.x, i1.y) < dist(sp.x, sp.y, i2.x, i2.y) ? i1 : i2;
 };
 
 // ----------------------------------------------------------------------------
@@ -171,7 +148,7 @@ const computeCells = () => {
   );
 
   // find a circle A that encompasses remaining cells
-  car = furthestDistofCells(vCells, 0, 0);
+  car = furthestDistOfCells(vCells, 0, 0);
 
   // shrink the circle and filter again
   carr = car - params.cellClipR;
@@ -181,7 +158,7 @@ const computeCells = () => {
   );
 
   // find another circle B that encompasses remaining cells
-  cbr = furthestDistofCells(tvc, 0, 0);
+  cbr = furthestDistOfCells(tvc, 0, 0);
 
   // clip cells using circleB
   vCells = vCells.map((vc) => {
@@ -210,7 +187,7 @@ const computeCells = () => {
     return { site: vc.site, points };
   });
 
-  // run prim's algorithm starting at ?? (closest cell to center)
+  // run prim's algorithm
 
   const graph = [];
   const vclen = vCells.length;
@@ -237,7 +214,7 @@ const drawCells = () => {
   // begin
   translate(width / 2, height / 2);
   scale(params.scale);
-  strokeWeight(1 / params.scale);
+  strokeWeight(1.5 / params.scale);
 
   // text (for debugging)
   const ts = params.textSize / params.scale;
@@ -252,8 +229,21 @@ const drawCells = () => {
   // });
 
   vCells.forEach((vc, i) => {
-    // site
+    push();
+    stroke(255);
+    strokeWeight(2 / params.scale);
 
+    fill(i === selectedVCellIndex || i === overVCellIndex ? 156 : 192);
+
+    // voronoi boundary
+    if (params.showCells) {
+      beginShape();
+      vc.points.forEach((p) => vertex(p.x, p.y));
+      endShape(CLOSE);
+    }
+    pop();
+
+    // site
     const { x, y } = vc.site;
 
     if (params.showCellSites) {
@@ -261,29 +251,22 @@ const drawCells = () => {
     }
 
     if (params.showCellText) {
+      push();
+      strokeWeight(1 / params.scale);
       text(i, x, y - textMiddle);
-    }
-
-    // voronoi boundaries
-
-    if (params.showCells) {
-      beginShape();
-      for (const p of vc.points) {
-        vertex(p.x, p.y);
-      }
-      endShape(CLOSE);
-    }
-
-    // prim tree
-
-    if (params.showPrimMst && primMst?.length > 0) {
-      primMst.forEach((e) => {
-        const { x: sx, y: sy } = vCells[e[0]].site;
-        const { x: ex, y: ey } = vCells[e[1]].site;
-        line(sx, sy, ex, ey);
-      });
+      pop();
     }
   });
+
+  // prim tree
+
+  if (params.showPrimMst && primMst?.length > 0) {
+    primMst.forEach((e) => {
+      const { x: sx, y: sy } = vCells[e[0]].site;
+      const { x: ex, y: ey } = vCells[e[1]].site;
+      line(sx, sy, ex, ey);
+    });
+  }
 
   // debug clip circles
   if (params.showCellClipCircles) {
@@ -294,14 +277,30 @@ const drawCells = () => {
 };
 
 // ----------------------------------------------------------------------------
-// tweakpane
+// voronoi selection
 // ----------------------------------------------------------------------------
 
-const _redraw = () => {
-  redraw();
+sketch.mouseMoved = () => {
+  const x = (mouseX + xl) / params.scale;
+  const y = (mouseY + yt) / params.scale;
+
+  const i = voronoiGetSite(vCells, x, y);
+
+  if (i !== overVCellIndex) {
+    overVCellIndex = voronoiGetSite(vCells, x, y);
+    redraw();
+  }
 };
 
-const pane = tweakpane(params, _redraw);
+sketch.mousePressed = () => {
+  if (mouseX >= 0 && mouseX < width && mouseY >= 0 && mouseY < height) {
+    const x = (mouseX + xl) / params.scale;
+    const y = (mouseY + yt) / params.scale;
+
+    selectedVCellIndex = voronoiGetSite(vCells, x, y);
+    redraw();
+  }
+};
 
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------

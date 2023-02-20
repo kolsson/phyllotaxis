@@ -1,13 +1,14 @@
 import { Pane } from "tweakpane";
-import { presets } from "./presets";
+import { presets } from "../presets";
 
-let pane;
-let pauseUpdates = false;
-let redrawCallback;
-
-export default function tp(params, _redrawCalback) {
-  pane = new Pane();
-  redrawCallback = _redrawCalback;
+export default function tp(
+  params,
+  computeCallback,
+  redrawCallback,
+  didLoadPresetCallback
+) {
+  const pane = new Pane();
+  let pauseUpdates = false;
 
   const presetOptions = presets.map((p, i) => ({
     text: `Preset ${i + 1}`,
@@ -26,7 +27,7 @@ export default function tp(params, _redrawCalback) {
     pauseUpdates = true;
     pane.importPreset({ ...params, ...presets[e.value] });
     pauseUpdates = false;
-    redrawCallback();
+    didLoadPresetCallback();
   });
 
   const exportButton = pane.addButton({
@@ -59,31 +60,37 @@ export default function tp(params, _redrawCalback) {
     min: 50,
     max: 1000,
     step: 1,
+    compute: true,
   });
   pane.addInput(params, "startCell", {
     min: 0,
     max: 50,
     step: 1,
+    compute: true,
   });
   pane.addInput(params, "cellAngle", {
     min: 100,
     max: 179,
     step: 1,
+    compute: true,
   });
   pane.addInput(params, "cellAngleFrac", {
     min: 0,
     max: 1,
     step: 0.1,
+    compute: true,
   });
   pane.addInput(params, "cellSize", {
     min: 6,
     max: 40,
     step: 1,
+    compute: true,
   });
   pane.addInput(params, "cellClipR", {
     min: 0,
     max: 100,
     step: 1,
+    compute: true,
   });
   pane.addSeparator();
 
@@ -102,8 +109,17 @@ export default function tp(params, _redrawCalback) {
 
   // updates
   pane.on("change", () => {
-    if (!pauseUpdates) redrawCallback();
+    if (!pauseUpdates) {
+      if (1) computeCallback();
+      redrawCallback();
+    }
   });
+
+  // populate with initial preset
+  pauseUpdates = true;
+  pane.importPreset({ ...params, ...presets[0] });
+  pauseUpdates = false;
+  didLoadPresetCallback();
 
   return pane;
 }

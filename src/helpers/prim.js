@@ -1,4 +1,4 @@
-// extremely slow prims. we can improve this by:
+// very basic prim. we can improve by either:
 // 1. creating our adjacency matrix directly from our cells
 // 2. use a binary heap + adjacency list OR Fibonacci heap + adjacency list
 //

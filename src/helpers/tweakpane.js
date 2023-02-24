@@ -1,6 +1,17 @@
 import { Pane } from "tweakpane";
 import { presets } from "../presets";
 
+// properties that need to be recomputed when updated
+
+const computeKeys = {
+  cellCount: true,
+  startCell: true,
+  cellAngle: true,
+  cellAngleFrac: true,
+  cellSize: true,
+  cellClipR: true,
+};
+
 export default function tp(
   params,
   computeCallback,
@@ -8,7 +19,7 @@ export default function tp(
   didLoadPresetCallback
 ) {
   const pane = new Pane();
-  let pauseUpdates = false;
+  let areUpdatesPaused = false;
 
   const presetOptions = presets.map((p, i) => ({
     text: `Preset ${i + 1}`,
@@ -24,9 +35,9 @@ export default function tp(
   });
 
   presetsList.on("change", (e) => {
-    pauseUpdates = true;
+    areUpdatesPaused = true;
     pane.importPreset({ ...params, ...presets[e.value] });
-    pauseUpdates = false;
+    areUpdatesPaused = false;
     didLoadPresetCallback();
   });
 
@@ -60,37 +71,31 @@ export default function tp(
     min: 50,
     max: 1000,
     step: 1,
-    compute: true,
   });
   pane.addInput(params, "startCell", {
     min: 0,
     max: 50,
     step: 1,
-    compute: true,
   });
   pane.addInput(params, "cellAngle", {
     min: 100,
     max: 179,
     step: 1,
-    compute: true,
   });
   pane.addInput(params, "cellAngleFrac", {
     min: 0,
     max: 1,
     step: 0.1,
-    compute: true,
   });
   pane.addInput(params, "cellSize", {
     min: 6,
     max: 40,
     step: 1,
-    compute: true,
   });
   pane.addInput(params, "cellClipR", {
     min: 0,
     max: 100,
     step: 1,
-    compute: true,
   });
   pane.addSeparator();
 
@@ -108,17 +113,17 @@ export default function tp(
   });
 
   // updates
-  pane.on("change", () => {
-    if (!pauseUpdates) {
-      if (1) computeCallback();
+  pane.on("change", (e) => {
+    if (!areUpdatesPaused) {
+      if (computeKeys[e.presetKey]) computeCallback();
       redrawCallback();
     }
   });
 
   // populate with initial preset
-  pauseUpdates = true;
+  areUpdatesPaused = true;
   pane.importPreset({ ...params, ...presets[0] });
-  pauseUpdates = false;
+  areUpdatesPaused = false;
   didLoadPresetCallback();
 
   return pane;

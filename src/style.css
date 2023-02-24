@@ -6,7 +6,7 @@ body {
   display: flex;
   height: 100%;
 
-  /* uncomment once we are done debugging */
+  /* uncomment once we are done debugging to center on page */
   /* align-items: center;
   justify-content: center; */
 }

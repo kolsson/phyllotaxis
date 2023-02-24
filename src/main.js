@@ -3,6 +3,8 @@ import p5 from "p5";
 import * as Tone from "tone";
 import * as Voronoi from "voronoi/rhill-voronoi-core";
 
+import FancyLine from "./helpers/fancyline";
+
 import tweakpane from "./helpers/tweakpane";
 import { lineSegmentCircleIntersect } from "./helpers/intersect";
 import { furthestDistOfCells, voronoiGetSite } from "./helpers/voronoi";
@@ -18,10 +20,14 @@ let xl, xr, yt, yb;
 let cellPoints, vCells;
 let selectedVCellIndex = -1;
 let overVCellIndex = -1;
-let primMst;
 
+// voronoi
 const v = new Voronoi();
 let vd;
+
+// prim's
+let primMst;
+let primLines = [];
 
 // ----------------------------------------------------------------------------
 // define parameters
@@ -84,15 +90,16 @@ sketch.setup = () => {
 
   // defaults
   stroke(92);
+  strokeCap(SQUARE);
   noFill();
   angleMode(DEGREES);
+  frameRate(30);
 
   // build our tweakpane
   tweakpane(params, _compute, _redraw, _didLoadPreset);
 
   // start
   computeCells();
-  noLoop();
 };
 
 // ----------------------------------------------------------------------------
@@ -103,6 +110,41 @@ sketch.draw = () => {
   background(255);
   drawCells();
 };
+
+// ----------------------------------------------------------------------------
+// sample lineStrokes for FancyLine
+// ----------------------------------------------------------------------------
+
+// basic
+const primLineStroke = () => 1.5 / params.scale;
+
+// random
+// const primLineStroke = () => (1 + 4 * Math.random()) / params.scale;
+
+// time based
+// const primLineStroke = () => (1 + (1 + sin(millis() / 10))) / params.scale;
+
+// time and index based
+// const primLineStroke = (i) =>
+//   (1 + (1 + sin(millis() / 4 + i * 100))) / params.scale;
+
+// ----------------------------------------------------------------------------
+// sample arrowInterps for FancyLine
+// ----------------------------------------------------------------------------
+
+// basic
+// const primArrowInterp = 1;
+
+// time based (back and forth)
+// const primArrowInterp = () => (1 - cos(millis() / 10)) / 2;
+
+// time based (forward)
+const primArrowInterp = () => (millis() % 1000) / 1000;
+
+// time and index based (forward)
+// const primArrowInterp = (i) => ((millis() + i * 100) % 1000) / 1000;
+
+// TO DO: distance based samples
 
 // ----------------------------------------------------------------------------
 // compute cells
@@ -187,7 +229,7 @@ const computeCells = () => {
     return { site: vc.site, points };
   });
 
-  // run prim's algorithm
+  // build our graph and run prim's algorithm
 
   const graph = [];
   const vclen = vCells.length;
@@ -201,6 +243,21 @@ const computeCells = () => {
   }
 
   primMst = prim(graph, vclen);
+
+  // create our prim lines
+  primLines = primMst.map(
+    (e) =>
+      new FancyLine({
+        sp: vCells[e[0]].site,
+        ep: vCells[e[1]].site,
+        index: e[0], // set our index to our origin site
+        lineStroke: primLineStroke,
+        extendStart: -3,
+        extendEnd: -3,
+        arrow: true,
+        arrowInterp: primArrowInterp,
+      })
+  );
 
   // update our monitor
   params.actualCellCount = vCells.length;
@@ -259,13 +316,8 @@ const drawCells = () => {
   });
 
   // prim tree
-
-  if (params.showPrimMst && primMst?.length > 0) {
-    primMst.forEach((e) => {
-      const { x: sx, y: sy } = vCells[e[0]].site;
-      const { x: ex, y: ey } = vCells[e[1]].site;
-      line(sx, sy, ex, ey);
-    });
+  if (params.showPrimMst) {
+    primLines.forEach((p) => p.draw());
   }
 
   // debug clip circles
@@ -288,7 +340,6 @@ sketch.mouseMoved = () => {
 
   if (i !== overVCellIndex) {
     overVCellIndex = voronoiGetSite(vCells, x, y);
-    redraw();
   }
 };
 
@@ -298,7 +349,6 @@ sketch.mousePressed = () => {
     const y = (mouseY + yt) / params.scale;
 
     selectedVCellIndex = voronoiGetSite(vCells, x, y);
-    redraw();
   }
 };
 

@@ -8,6 +8,7 @@ import FancyLine from "./helpers/fancyline";
 import tweakpane from "./helpers/tweakpane";
 import { lineSegmentCircleIntersect } from "./helpers/intersect";
 import { furthestDistOfCells, voronoiGetSite } from "./helpers/voronoi";
+import * as E from "./helpers/easing";
 import prim from "./helpers/prim";
 
 const sketch = window;
@@ -112,21 +113,54 @@ sketch.draw = () => {
 };
 
 // ----------------------------------------------------------------------------
-// sample lineStrokes for FancyLine
+// sample strokeWeights for FancyLine
 // ----------------------------------------------------------------------------
 
 // basic
-const primLineStroke = () => 1.5 / params.scale;
+const primStrokeWeight = () => 1.5 / params.scale;
 
 // random
-// const primLineStroke = () => (1 + 4 * Math.random()) / params.scale;
+// const primStrokeWeight = () => (1 + 4 * Math.random()) / params.scale;
 
 // time based
-// const primLineStroke = () => (1 + (1 + sin(millis() / 10))) / params.scale;
+// const primStrokeWeight = () => (1 + (1 + sin(millis() / 10))) / params.scale;
 
 // time and index based
-// const primLineStroke = (i) =>
+// const primStrokeWeight = (i) =>
 //   (1 + (1 + sin(millis() / 4 + i * 100))) / params.scale;
+
+// ----------------------------------------------------------------------------
+// sample arrowStrokes for FancyLine
+// ----------------------------------------------------------------------------
+
+const arrowColor = [92, 92, 92];
+
+// basic
+// const primArrowStroke = arrowColor;
+
+// t based (easing)
+// const primArrowStroke = (i, d, t) =>
+//   color([...arrowColor, E.easeOutQuint(t > 0.5 ? 1 - t : t) * 255]);
+
+// t / distance based (easing)
+const primArrowStroke = (i, d, t) =>
+  color([
+    ...arrowColor,
+    E.easeOutQuint(((t > 0.5 ? 1 - t : t) * d) / 20) * 255,
+  ]);
+
+// index based
+// const startArrowColor = [128, 0, 128];
+// const endArrowColor = [0, 0, 255];
+
+// const primArrowStroke = (i) =>
+//   lerpColor(
+//     color(startArrowColor),
+//     color(endArrowColor),
+//     i / (params.actualCellCount || 1)
+//   );
+
+// // const alpha = Math.max(0, Math.min(255, 255 * (t * 3)));
 
 // ----------------------------------------------------------------------------
 // sample arrowInterps for FancyLine
@@ -139,12 +173,13 @@ const primLineStroke = () => 1.5 / params.scale;
 // const primArrowInterp = () => (1 - cos(millis() / 10)) / 2;
 
 // time based (forward)
-const primArrowInterp = () => (millis() % 1000) / 1000;
+// const primArrowInterp = () => millis() / 1500;
 
 // time and index based (forward)
-// const primArrowInterp = (i) => ((millis() + i * 100) % 1000) / 1000;
+// const primArrowInterp = (i) => (millis() + i * 100) / 1500;
 
-// TO DO: distance based samples
+// distance based
+const primArrowInterp = (i, d) => millis() / (100 * d);
 
 // ----------------------------------------------------------------------------
 // compute cells
@@ -246,17 +281,35 @@ const computeCells = () => {
 
   // create our prim lines
   primLines = primMst.map(
-    (e) =>
+    (e, index) =>
       new FancyLine({
         sp: vCells[e[0]].site,
         ep: vCells[e[1]].site,
-        index: e[0], // set our index to our origin site
-        lineStroke: primLineStroke,
+        index, //: e[0], // set our index to our origin site
+        stroke: [92, 92, 92],
+        strokeWeight: primStrokeWeight,
         extendStart: -3,
         extendEnd: -3,
-        arrow: true,
+        arrowCount: 2,
+        arrowStroke: primArrowStroke,
         arrowInterp: primArrowInterp,
       })
+  );
+
+  // a test fancyline
+  primLines.push(
+    new FancyLine({
+      sp: { x: -200, y: -200 },
+      ep: { x: 200, y: -200 },
+      index: -1,
+      stroke: [92, 92, 92],
+      strokeWeight: primStrokeWeight,
+      extendStart: -3,
+      extendEnd: -3,
+      arrowCount: 10,
+      arrowStroke: primArrowStroke,
+      arrowInterp: primArrowInterp,
+    })
   );
 
   // update our monitor

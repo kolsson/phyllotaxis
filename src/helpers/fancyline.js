@@ -8,36 +8,49 @@ export default class FancyLine {
     sp,
     ep,
 
-    // index if we have multiple lines we want to synchronize in some way
+    // index, for if we have multiple lines we want to synchronize in some way
     index,
 
-    // in case we want to set our line stroke on a per-line basis
-    // can be a function
-    lineStroke = undefined,
+    stroke = undefined, // can be a function
+    strokeWeight = undefined, // can be a function
 
     extendStart = 0,
     extendEnd = 0,
 
-    arrow = false,
-    arrowWidth = 2.5,
-    arrowHeight = 2.5,
+    // arrows
+    arrowCount = 0,
+    arrowWidth = 2,
+    arrowHeight = 2,
+    arrowStroke = undefined, // can be a function
+    arrowInterpIgnoreHeight = false,
     arrowInterp = 0,
+
+    showLine = true,
+    showArrows = true,
   }) {
     this.sp = { ...sp };
     this.ep = { ...ep };
 
     this.index = index;
 
-    this.lineStroke = lineStroke;
+    this.stroke = stroke;
+    this.strokeWeight = strokeWeight;
 
     this.extendStart = extendStart;
     this.extendEnd = extendEnd;
 
-    this.arrow = arrow;
+    this.arrowCount = arrowCount;
     this.arrowWidth = arrowWidth;
     this.arrowHeight = arrowHeight;
+    this.arrowStroke = arrowStroke;
+    this.arrowInterpIgnoreHeight = arrowInterpIgnoreHeight;
     this.arrowInterp = arrowInterp;
-    this.arrowInterpIgnoreHeight = false;
+
+    this.showLine = showLine;
+    this.showArrows = showArrows;
+
+    // arrow storage
+    this.arrows = new Array(arrowCount);
 
     this.compute();
   }
@@ -63,21 +76,21 @@ export default class FancyLine {
       this.fep.y = this.ep.y + ((this.ep.y - this.fsp.y) / d) * this.extendEnd;
     }
 
-    this.computeArrow();
+    this.computeArrows();
   }
 
-  computeArrow() {
-    if (this.arrow) {
-      // where do we put the arrowhead on the line?
+  computeArrows() {
+    if (this.showArrows && this.arrowCount > 0) {
+      // get our distance and unit x and y for our line
+      // if our line is a curve we will need to change how
+      // we do this
+
       const d = dist(this.fsp.x, this.fsp.y, this.fep.x, this.fep.y);
+
       const unitx = (this.fep.x - this.fsp.x) / d;
       const unity = (this.fep.y - this.fsp.y) / d;
 
-      const t =
-        typeof this.arrowInterp === "function"
-          ? this.arrowInterp(this.index, d)
-          : this.arrowInterp;
-
+      // get our start point for lerping
       let sx, sy;
 
       if (this.arrowInterpIgnoreHeight) {
@@ -90,69 +103,93 @@ export default class FancyLine {
         sy = this.fsp.y + unity * this.arrowHeight;
       }
 
-      // our arrow end
+      // get the positions for each of our arrows
+      for (let i = 0; i < this.arrowCount; i++) {
+        const a = {};
 
-      const lerpx = lerp(sx, this.fep.x, t);
-      const lerpy = lerp(sy, this.fep.y, t);
+        let t =
+          typeof this.arrowInterp === "function"
+            ? this.arrowInterp(this.index, d)
+            : this.arrowInterp;
 
-      this.arrowEnd = { x: lerpx, y: lerpy };
+        // adjust our t based on our arrow index
+        t = t + i / this.arrowCount;
 
-      // our arrow base
+        // make sure our t wraps around
+        t = ((t * 1000) % 1000) / 1000;
 
-      const bx = lerpx + unitx * -this.arrowHeight;
-      const by = lerpy + unity * -this.arrowHeight;
+        // our arrow end
+        const lerpx = lerp(sx, this.fep.x, t);
+        const lerpy = lerp(sy, this.fep.y, t);
 
-      // angle perpendicular to our line to get our arrow left and right
+        a.end = { x: lerpx, y: lerpy };
 
-      const a = atan2(this.fep.y - this.fsp.y, this.fep.x - this.fsp.x);
+        // our arrow base
+        const bx = lerpx + unitx * -this.arrowHeight;
+        const by = lerpy + unity * -this.arrowHeight;
 
-      this.arrowLeft = {
-        x: bx + this.arrowWidth * -sin(a),
-        y: by + this.arrowWidth * cos(a),
-      };
+        // angle perpendicular to our line to get our arrow left and right
+        const theta = atan2(this.fep.y - this.fsp.y, this.fep.x - this.fsp.x);
 
-      this.arrowRight = {
-        x: bx + this.arrowWidth * sin(a),
-        y: by + this.arrowWidth * -cos(a),
-      };
-    } else {
-      this.arrowEnd = { ...this.fep };
-      this.arrowLeft = { ...this.fep };
-      this.arrowRight = { ...this.fep };
+        a.left = {
+          x: bx + this.arrowWidth * -sin(theta),
+          y: by + this.arrowWidth * cos(theta),
+        };
+
+        a.right = {
+          x: bx + this.arrowWidth * sin(theta),
+          y: by + this.arrowWidth * -cos(theta),
+        };
+
+        // compute our arrow stroke
+        if (this.arrowStroke !== undefined) {
+          a.stroke =
+            typeof this.arrowStroke === "function"
+              ? this.arrowStroke(this.index, d, t)
+              : this.arrowStroke;
+        }
+
+        // store our arrow
+        this.arrows[i] = a;
+      }
     }
   }
 
   draw() {
-    // set our stroke, if needed
-    if (this.lineStroke !== undefined) {
+    // set our strokeWeight, if needed
+    if (this.strokeWeight !== undefined) {
       const sw =
-        typeof this.lineStroke === "function"
-          ? this.lineStroke(this.index)
-          : this.lineStroke;
+        typeof this.strokeWeight === "function"
+          ? this.strokeWeight(this.index)
+          : this.strokeWeight;
 
       strokeWeight(sw);
     }
 
+    // set our stroke, if needed
+    if (this.stroke !== undefined) {
+      const s =
+        typeof this.stroke === "function"
+          ? this.stroke(this.index)
+          : this.stroke;
+
+      stroke(s);
+    }
+
     // draw our line
-    line(this.fsp.x, this.fsp.y, this.fep.x, this.fep.y);
+    if (this.showLine) line(this.fsp.x, this.fsp.y, this.fep.x, this.fep.y);
 
-    // draw our arrow
-    if (this.arrow) {
-      // if our arrowInterp is a function, compute our arrow first
-      if (typeof this.arrowInterp === "function") this.computeArrow();
+    // draw our arrows
+    if (this.showArrows && this.arrowCount > 0) {
+      // if arrowInterp is a function, compute our arrows first
+      if (typeof this.arrowInterp === "function") this.computeArrows();
 
-      line(
-        this.arrowEnd.x,
-        this.arrowEnd.y,
-        this.arrowLeft.x,
-        this.arrowLeft.y
-      );
-      line(
-        this.arrowEnd.x,
-        this.arrowEnd.y,
-        this.arrowRight.x,
-        this.arrowRight.y
-      );
+      this.arrows.forEach((a) => {
+        if (a.stroke !== undefined) stroke(a.stroke);
+
+        line(a.end.x, a.end.y, a.left.x, a.left.y);
+        line(a.end.x, a.end.y, a.right.x, a.right.y);
+      });
     }
   }
 }

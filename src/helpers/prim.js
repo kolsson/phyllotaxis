@@ -34,7 +34,7 @@ function createAdjMatrix(graph, numVertices) {
 
 export default function prim(graph, numVertices) {
   const adjMatrix = createAdjMatrix(graph, numVertices);
-  let vertex = 0; // first vertex doesn't matter
+  let vertex = Math.floor(numVertices / 2); // start somewhere in the middle
 
   // initialize empty edges array and empty tree
   const mst = [];

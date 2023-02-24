@@ -142,7 +142,7 @@ const arrowColor = [92, 92, 92];
 // const primArrowStroke = (i, d, t) =>
 //   color([...arrowColor, E.easeOutQuint(t > 0.5 ? 1 - t : t) * 255]);
 
-// t / distance based (easing)
+// t and distance based (easing)
 const primArrowStroke = (i, d, t) =>
   color([
     ...arrowColor,
@@ -304,8 +304,6 @@ const computeCells = () => {
       index: -1,
       stroke: [92, 92, 92],
       strokeWeight: primStrokeWeight,
-      extendStart: -3,
-      extendEnd: -3,
       arrowCount: 10,
       arrowStroke: primArrowStroke,
       arrowInterp: primArrowInterp,
@@ -370,7 +368,9 @@ const drawCells = () => {
 
   // prim tree
   if (params.showPrimMst) {
+    push();
     primLines.forEach((p) => p.draw());
+    pop();
   }
 
   // debug clip circles

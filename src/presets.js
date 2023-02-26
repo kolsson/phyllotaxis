@@ -11,7 +11,8 @@ export const presets = [
     cellAngleFrac: 0.5,
 
     cellSize: 12,
-    cellClipR: 40,
+    cellClipMult: 1,
+    cellTrimR: 40,
   },
 
   {
@@ -23,7 +24,8 @@ export const presets = [
     cellAngleFrac: 0.5,
 
     cellSize: 12,
-    cellClipR: 40,
+    cellClipMult: 1,
+    cellTrimR: 40,
   },
   {
     scale: 1,
@@ -35,6 +37,20 @@ export const presets = [
     cellAngleFrac: 0.5,
 
     cellSize: 24,
-    cellClipR: 0,
+    cellClipMult: 1,
+    cellTrimR: 0,
+  },
+  {
+    scale: 0.6,
+
+    cellCount: 300,
+    startCell: 1,
+
+    cellAngle: 137,
+    cellAngleFrac: 0.5,
+
+    cellSize: 40,
+    cellClipMult: 1.8,
+    cellTrimR: 0,
   },
 ];

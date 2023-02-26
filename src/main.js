@@ -49,7 +49,8 @@ const params = {
   cellAngleFrac: 0.5,
 
   cellSize: 24,
-  cellClipR: 0,
+  cellClipMult: 1,
+  cellTrimR: 0,
 
   // debugging
   showCellClipCircles: false,
@@ -113,70 +114,17 @@ sketch.draw = () => {
 };
 
 // ----------------------------------------------------------------------------
-// sample strokeWeights for FancyLine
+// fancyline callbacks
 // ----------------------------------------------------------------------------
 
-// basic
 const primStrokeWeight = () => 1.5 / params.scale;
 
-// random
-// const primStrokeWeight = () => (1 + 4 * Math.random()) / params.scale;
-
-// time based
-// const primStrokeWeight = (m) => (1 + (1 + sin(m / 10))) / params.scale;
-
-// time and index based
-// const primStrokeWeight = (m, i) =>
-//   (1 + (1 + sin(m / 4 + i * 100))) / params.scale;
-
-// ----------------------------------------------------------------------------
-// sample arrowStrokes for FancyLine
-// ----------------------------------------------------------------------------
-
 const arrowColor = [92, 92, 92];
-
-// basic
-// const primArrowStroke = arrowColor;
-
-// t based (easing)
-// const primArrowStroke = (m, i, d, t) =>
-//   color([...arrowColor, E.easeOutQuint(t > 0.5 ? 1 - t : t) * 255]);
-
-// t and distance based (easing)
 const primArrowStroke = (m, i, d, t) =>
   color([
     ...arrowColor,
     E.easeOutQuint(((t > 0.5 ? 1 - t : t) * d) / 15) * 255,
   ]);
-
-// index based
-// const startArrowColor = [128, 0, 128];
-// const endArrowColor = [0, 0, 255];
-
-// const primArrowStroke = (m, i) =>
-//   lerpColor(
-//     color(startArrowColor),
-//     color(endArrowColor),
-//     i / (params.actualCellCount || 1)
-//   );
-
-// ----------------------------------------------------------------------------
-// sample arrowInterps for FancyLine
-// ----------------------------------------------------------------------------
-
-// basic
-// const primArrowInterp = 1;
-
-// time based (back and forth)
-// const primArrowInterp = (m) => (1 - cos(m / 10)) / 2;
-
-// time based (forward)
-// const primArrowInterp = (m) => m / 1500;
-
-// time and index based (forward)
-// const primArrowInterp = (m, i) => (m + i * 100) / 1500;
-
-// distance based
 const primArrowInterp = (m, i, d) => m / (100 * d);
 
 // ----------------------------------------------------------------------------
@@ -200,7 +148,12 @@ const computeCells = () => {
   // compute voronoi diagram
 
   if (vd?.length > 0) v.recycle(vd); // if we have an existing diagram, recycle
-  vd = v.compute(cellPoints, { xl, xr, yt, yb });
+  vd = v.compute(cellPoints, {
+    xl: xl * params.cellClipMult,
+    xr: xr * params.cellClipMult,
+    yt: yt * params.cellClipMult,
+    yb: yb * params.cellClipMult,
+  });
 
   // get voronoi cells
 
@@ -212,24 +165,37 @@ const computeCells = () => {
     }
     vCells.push({ site: { ...vd.cells[i].site }, points });
   }
-  // filter our cells, remove cells that touch our canvas edges
+  // filter our cells, remove cells that touch our diagram edges
   // vCells = vCells.filter((vc) =>
-  //   vc.points.every((p) => p.x > xl && p.x < xr && p.y > yt && p.y < yb)
+  //   vc.points.every(
+  //     (p) =>
+  //       p.x > xl * params.cellClipMult &&
+  //       p.x < xr * params.cellClipMult &&
+  //       p.y > yt * params.cellClipMult &&
+  //       p.y < yb * params.cellClipMult
+  //   )
   // );
 
   // alternate approach: remove cells outside a circle with diameter = width
-  vCells = vCells.filter((vc) =>
-    vc.points.every((p) => dist(0, 0, p.x, p.y) < width / 2)
+  vCells = vCells.filter(
+    (vc) =>
+      dist(0, 0, vc.site.x, vc.site.y) < (width / 2) * params.cellClipMult &&
+      vc.points.every(
+        (p) => dist(0, 0, p.x, p.y) < (width / 2) * params.cellClipMult
+      )
   );
 
+  // trim strays
   // find a circle A that encompasses remaining cells
   car = furthestDistOfCells(vCells, 0, 0);
 
   // shrink the circle and filter again
-  carr = car - params.cellClipR;
+  carr = car - params.cellTrimR;
 
-  const tvc = vCells.filter((vc) =>
-    vc.points.every((p) => dist(0, 0, p.x, p.y) < carr)
+  const tvc = vCells.filter(
+    (vc) =>
+      dist(0, 0, vc.site.x, vc.site.y) < carr &&
+      vc.points.every((p) => dist(0, 0, p.x, p.y) < carr)
   );
 
   // find another circle B that encompasses remaining cells
@@ -251,6 +217,7 @@ const computeCells = () => {
       } else {
         // we intersect, generate two points -- this is very naive and assumes
         // each cell has only 2 points of intersection with the circle
+        // just used to clean up strays!
 
         points.push(lineSegmentCircleIntersect(sp, ep, cbr));
 
@@ -289,7 +256,6 @@ const computeCells = () => {
         extendStart: -3,
         extendEnd: -3,
         showArrows: true,
-        // arrowCount: 2,
         arrowDistance: 8,
         arrowStroke: primArrowStroke,
         arrowInterp: primArrowInterp,

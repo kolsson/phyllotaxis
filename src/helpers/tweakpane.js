@@ -9,7 +9,8 @@ const computeKeys = {
   cellAngle: true,
   cellAngleFrac: true,
   cellSize: true,
-  cellClipR: true,
+  cellClipMult: true,
+  cellTrimR: true,
 };
 
 export default function tp(
@@ -92,7 +93,12 @@ export default function tp(
     max: 40,
     step: 1,
   });
-  pane.addInput(params, "cellClipR", {
+  pane.addInput(params, "cellClipMult", {
+    min: 0.5,
+    max: 4,
+    step: 0.1,
+  });
+  pane.addInput(params, "cellTrimR", {
     min: 0,
     max: 100,
     step: 1,

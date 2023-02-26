@@ -40,6 +40,8 @@ const params = {
 
   // ui
   scale: 1,
+  canvasX: 0,
+  canvasY: 0,
 
   // core params
   cellCount: 300,
@@ -53,7 +55,7 @@ const params = {
   cellTrimR: 0,
 
   // debugging
-  showCellClipCircles: false,
+  showCellTrimCircles: false,
   showCells: true,
   showPrimMst: true,
   showCellSites: false,
@@ -77,6 +79,8 @@ const _didLoadPreset = () => {
 // sketch: setup
 // ----------------------------------------------------------------------------
 
+let pane;
+
 sketch.setup = () => {
   createCanvas(800, 800);
 
@@ -98,7 +102,7 @@ sketch.setup = () => {
   frameRate(30);
 
   // build our tweakpane
-  tweakpane(params, _compute, _redraw, _didLoadPreset);
+  pane = tweakpane(params, _compute, _redraw, _didLoadPreset);
 
   // start
   computeCells();
@@ -290,6 +294,7 @@ const drawCells = () => {
   translate(width / 2, height / 2);
   scale(params.scale);
   strokeWeight(1.5 / params.scale);
+  translate(params.canvasX, params.canvasY);
 
   // text (for debugging)
   const ts = params.textSize / params.scale;
@@ -341,7 +346,7 @@ const drawCells = () => {
   }
 
   // debug clip circles
-  if (params.showCellClipCircles) {
+  if (params.showCellTrimCircles) {
     ellipse(0, 0, car * 2);
     ellipse(0, 0, carr * 2);
     ellipse(0, 0, cbr * 2);
@@ -349,10 +354,33 @@ const drawCells = () => {
 };
 
 // ----------------------------------------------------------------------------
-// voronoi selection
+// interaction
+// keycodes can be looked up here: https://www.toptal.com/developers/keycode
 // ----------------------------------------------------------------------------
 
+let dragging = false;
+
+let startCanvasX = 0;
+let startCanvasY = 0;
+
+let mousePressedX = 0;
+let mousePressedY = 0;
+
+sketch.keyPressed = () => {
+  if (keyCode === 32) {
+    dragging = true;
+    cursor("grab");
+    return false;
+  }
+};
+
+sketch.keyReleased = () => {
+  dragging = false;
+  cursor(ARROW);
+};
+
 sketch.mouseMoved = () => {
+  // check for cell rollovers
   const x = (mouseX + xl) / params.scale;
   const y = (mouseY + yt) / params.scale;
 
@@ -364,12 +392,43 @@ sketch.mouseMoved = () => {
 };
 
 sketch.mousePressed = () => {
-  if (mouseX >= 0 && mouseX < width && mouseY >= 0 && mouseY < height) {
-    const x = (mouseX + xl) / params.scale;
-    const y = (mouseY + yt) / params.scale;
+  // if we aren't dragging see if we clicked on a cell
 
-    selectedVCellIndex = voronoiGetSite(vCells, x, y);
+  if (!dragging) {
+    if (mouseX >= 0 && mouseX < width && mouseY >= 0 && mouseY < height) {
+      const x = (mouseX + xl) / params.scale;
+      const y = (mouseY + yt) / params.scale;
+
+      selectedVCellIndex = voronoiGetSite(vCells, x, y);
+    }
   }
+
+  // record where we clicked
+  mousePressedX = mouseX;
+  mousePressedY = mouseY;
+
+  startCanvasX = params.canvasX;
+  startCanvasY = params.canvasY;
+};
+
+sketch.mouseDragged = () => {
+  if (dragging) {
+    params.canvasX = startCanvasX + (mouseX - mousePressedX) / params.scale;
+    params.canvasY = startCanvasY + (mouseY - mousePressedY) / params.scale;
+  }
+};
+
+sketch.mouseWheel = (e) => {
+  // scale range is 0.5 - 10 (also defined in tweakpane)
+
+  params.scale = constrain(
+    Math.round((params.scale + e.delta / 128) * 10) / 10,
+    0.5,
+    10
+  );
+
+  // update our tweakpane
+  pane?.refresh();
 };
 
 // ----------------------------------------------------------------------------

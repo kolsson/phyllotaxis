@@ -30,7 +30,7 @@ export default function tp(
   // presets and export
   const presetsList = pane.addBlade({
     view: "list",
-    label: "Presets",
+    label: "presets",
     options: presetOptions,
     value: 0,
   });
@@ -44,7 +44,7 @@ export default function tp(
 
   const exportButton = pane.addButton({
     title: "copy + console.log()",
-    label: "Parameters",
+    label: "",
   });
 
   exportButton.on("click", async () => {
@@ -55,16 +55,27 @@ export default function tp(
 
   pane.addSeparator();
 
-  // monitors
-  pane.addMonitor(params, "actualCellCount", {});
-  pane.addSeparator();
-
   // ui
+  const centerButton = pane.addButton({
+    title: "center",
+    label: "canvas",
+  });
+
+  centerButton.on("click", () => {
+    params.canvasX = 0;
+    params.canvasY = 0;
+  });
+
   pane.addInput(params, "scale", {
     min: 0.5,
     max: 10,
     step: 0.1,
   });
+
+  pane.addSeparator();
+
+  // monitors
+  pane.addMonitor(params, "actualCellCount", {});
   pane.addSeparator();
 
   // core params
@@ -106,10 +117,12 @@ export default function tp(
   pane.addSeparator();
 
   // debugging
-  pane.addInput(params, "showCellClipCircles", { label: "Show Clip Circles" });
+  pane.addInput(params, "showCellTrimCircles", { label: "Show Trim Circles" });
+  pane.addSeparator();
   pane.addInput(params, "showCells", { label: "Show Cells" });
-  pane.addInput(params, "showPrimMst", { label: "Show Prim MST" });
   pane.addInput(params, "showCellSites", { label: "Show Cell Sites" });
+  pane.addInput(params, "showPrimMst", { label: "Show Prim MST" });
+  pane.addSeparator();
   pane.addInput(params, "showCellText", { label: "Show Cell Text" });
   pane.addInput(params, "textSize", {
     label: "Text Size",

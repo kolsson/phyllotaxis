@@ -123,11 +123,11 @@ const primStrokeWeight = () => 1.5 / params.scale;
 // const primStrokeWeight = () => (1 + 4 * Math.random()) / params.scale;
 
 // time based
-// const primStrokeWeight = () => (1 + (1 + sin(millis() / 10))) / params.scale;
+// const primStrokeWeight = (m) => (1 + (1 + sin(m / 10))) / params.scale;
 
 // time and index based
-// const primStrokeWeight = (i) =>
-//   (1 + (1 + sin(millis() / 4 + i * 100))) / params.scale;
+// const primStrokeWeight = (m, i) =>
+//   (1 + (1 + sin(m / 4 + i * 100))) / params.scale;
 
 // ----------------------------------------------------------------------------
 // sample arrowStrokes for FancyLine
@@ -139,11 +139,11 @@ const arrowColor = [92, 92, 92];
 // const primArrowStroke = arrowColor;
 
 // t based (easing)
-// const primArrowStroke = (i, d, t) =>
+// const primArrowStroke = (m, i, d, t) =>
 //   color([...arrowColor, E.easeOutQuint(t > 0.5 ? 1 - t : t) * 255]);
 
 // t and distance based (easing)
-const primArrowStroke = (i, d, t) =>
+const primArrowStroke = (m, i, d, t) =>
   color([
     ...arrowColor,
     E.easeOutQuint(((t > 0.5 ? 1 - t : t) * d) / 15) * 255,
@@ -153,14 +153,12 @@ const primArrowStroke = (i, d, t) =>
 // const startArrowColor = [128, 0, 128];
 // const endArrowColor = [0, 0, 255];
 
-// const primArrowStroke = (i) =>
+// const primArrowStroke = (m, i) =>
 //   lerpColor(
 //     color(startArrowColor),
 //     color(endArrowColor),
 //     i / (params.actualCellCount || 1)
 //   );
-
-// // const alpha = Math.max(0, Math.min(255, 255 * (t * 3)));
 
 // ----------------------------------------------------------------------------
 // sample arrowInterps for FancyLine
@@ -170,16 +168,16 @@ const primArrowStroke = (i, d, t) =>
 // const primArrowInterp = 1;
 
 // time based (back and forth)
-// const primArrowInterp = () => (1 - cos(millis() / 10)) / 2;
+// const primArrowInterp = (m) => (1 - cos(m / 10)) / 2;
 
 // time based (forward)
-// const primArrowInterp = () => millis() / 1500;
+// const primArrowInterp = (m) => m / 1500;
 
 // time and index based (forward)
-// const primArrowInterp = (i) => (millis() + i * 100) / 1500;
+// const primArrowInterp = (m, i) => (m + i * 100) / 1500;
 
 // distance based
-const primArrowInterp = (i, d) => millis() / (100 * d);
+const primArrowInterp = (m, i, d) => m / (100 * d);
 
 // ----------------------------------------------------------------------------
 // compute cells
@@ -290,27 +288,28 @@ const computeCells = () => {
         strokeWeight: primStrokeWeight,
         extendStart: -3,
         extendEnd: -3,
-        arrowCount: 2,
-        // arrowDistance: 10,
+        showArrows: true,
+        // arrowCount: 2,
+        arrowDistance: 8,
         arrowStroke: primArrowStroke,
         arrowInterp: primArrowInterp,
       })
   );
 
   // a test fancyline
-  primLines.push(
-    new FancyLine({
-      sp: { x: -200, y: -200 },
-      ep: { x: 200, y: -200 },
-      index: -1,
-      stroke: [92, 92, 92],
-      strokeWeight: primStrokeWeight,
-      arrowCount: 10,
-      arrowDistance: 60,
-      arrowStroke: primArrowStroke,
-      arrowInterp: primArrowInterp,
-    })
-  );
+  // primLines.push(
+  //   new FancyLine({
+  //     sp: { x: -200, y: -200 },
+  //     ep: { x: 200, y: -200 },
+  //     index: -1,
+  //     stroke: [92, 92, 92],
+  //     strokeWeight: primStrokeWeight,
+  //     showArrows: true,
+  //     arrowDistance: 30,
+  //     arrowStroke: primArrowStroke,
+  //     arrowInterp: primArrowInterp,
+  //   })
+  // );
 
   // update our monitor
   params.actualCellCount = vCells.length;

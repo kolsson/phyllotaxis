@@ -19,6 +19,7 @@ export default class FancyLine {
 
     // arrows
     arrowCount = 0,
+    arrowDistance = undefined, // if undefined, we divide line distance by count
     arrowWidth = 2,
     arrowHeight = 2,
     arrowStroke = undefined, // can be a function
@@ -40,6 +41,7 @@ export default class FancyLine {
     this.extendEnd = extendEnd;
 
     this.arrowCount = arrowCount;
+    this.arrowDistance = arrowDistance;
     this.arrowWidth = arrowWidth;
     this.arrowHeight = arrowHeight;
     this.arrowStroke = arrowStroke;
@@ -76,6 +78,8 @@ export default class FancyLine {
       this.fep.y = this.ep.y + ((this.ep.y - this.fsp.y) / d) * this.extendEnd;
     }
 
+    // compute our arrows
+
     this.computeArrows();
   }
 
@@ -85,10 +89,10 @@ export default class FancyLine {
       // if our line is a curve we will need to change how
       // we do this
 
-      const d = dist(this.fsp.x, this.fsp.y, this.fep.x, this.fep.y);
+      let d = dist(this.fsp.x, this.fsp.y, this.fep.x, this.fep.y);
 
-      const unitx = (this.fep.x - this.fsp.x) / d;
-      const unity = (this.fep.y - this.fsp.y) / d;
+      let unitx = (this.fep.x - this.fsp.x) / d;
+      let unity = (this.fep.y - this.fsp.y) / d;
 
       // get our start point for lerping
       let sx, sy;
@@ -101,9 +105,24 @@ export default class FancyLine {
 
         sx = this.fsp.x + unitx * this.arrowHeight;
         sy = this.fsp.y + unity * this.arrowHeight;
+
+        // then recalculate our distance and unitx, unity
+
+        d = dist(this.fsp.x, this.fsp.y, this.fep.x, this.fep.y);
+
+        unitx = (this.fep.x - this.fsp.x) / d;
+        unity = (this.fep.y - this.fsp.y) / d;
       }
 
       // get the positions for each of our arrows
+
+      // used when we have a specified distance between arrows
+      // to determine when we started putting arrows in front
+      // of our primary arrow rather than behind
+      let flipIndex = 0;
+
+      const addd = this.arrowDistance / d;
+
       for (let i = 0; i < this.arrowCount; i++) {
         const a = {};
 
@@ -112,11 +131,43 @@ export default class FancyLine {
             ? this.arrowInterp(this.index, d)
             : this.arrowInterp;
 
-        // adjust our t based on our arrow index
-        t = t + i / this.arrowCount;
+        if (this.arrowDistance === undefined) {
+          // we divide line distance by count and
+          // adjust our t based on our arrow index
+          t = t - i / this.arrowCount;
 
-        // make sure our t wraps around
-        t = ((t * 1000) % 1000) / 1000;
+          // make sure our t wraps around
+          t = ((t * 1000) % 1000) / 1000;
+        } else {
+          // we have a specifiied distance between arrows
+
+          // make sure our t wraps around
+          t = ((t * 1000) % 1000) / 1000;
+
+          if (i > 0) {
+            // not the primary arrow
+
+            // are we placing our arrow before or behind it?
+            if (flipIndex === 0) {
+              // we are still working on arrows behind our primary
+              const baset = t;
+              t = t - i * addd;
+
+              // if t is less than 0 we have to place it in front instead
+              if (t < 0) {
+                flipIndex = i - 1;
+                t = baset + (i - flipIndex) * addd;
+              }
+            } else {
+              // we are working on arrows ahead of our primary
+              t = t + (i - flipIndex) * addd;
+            }
+          }
+        }
+
+        // if t > 1 we can exit early; we are placing arrows too far ahead
+        // of our primary
+        if (t > 1) break;
 
         // our arrow end
         const lerpx = lerp(sx, this.fep.x, t);

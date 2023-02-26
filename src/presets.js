@@ -13,6 +13,18 @@ export const presets = [
     cellSize: 12,
     cellClipR: 40,
   },
+
+  {
+    scale: 1.7,
+    cellCount: 300,
+    startCell: 1,
+
+    cellAngle: 105,
+    cellAngleFrac: 0.5,
+
+    cellSize: 12,
+    cellClipR: 40,
+  },
   {
     scale: 1,
 

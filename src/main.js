@@ -146,7 +146,7 @@ const arrowColor = [92, 92, 92];
 const primArrowStroke = (i, d, t) =>
   color([
     ...arrowColor,
-    E.easeOutQuint(((t > 0.5 ? 1 - t : t) * d) / 20) * 255,
+    E.easeOutQuint(((t > 0.5 ? 1 - t : t) * d) / 15) * 255,
   ]);
 
 // index based
@@ -291,6 +291,7 @@ const computeCells = () => {
         extendStart: -3,
         extendEnd: -3,
         arrowCount: 2,
+        // arrowDistance: 10,
         arrowStroke: primArrowStroke,
         arrowInterp: primArrowInterp,
       })
@@ -305,6 +306,7 @@ const computeCells = () => {
       stroke: [92, 92, 92],
       strokeWeight: primStrokeWeight,
       arrowCount: 10,
+      arrowDistance: 60,
       arrowStroke: primArrowStroke,
       arrowInterp: primArrowInterp,
     })
@@ -355,7 +357,7 @@ const drawCells = () => {
     const { x, y } = vc.site;
 
     if (params.showCellSites) {
-      ellipse(x, y, params.cellSize, params.cellSize);
+      circle(x, y, 6); // we could use params.cellSize but we want to connect with our arrow lines
     }
 
     if (params.showCellText) {

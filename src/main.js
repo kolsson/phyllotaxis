@@ -60,7 +60,7 @@ const params = {
   cellDropOutMult: 1,
   cellDropOutMod: 10,
 
-  primMstArrowDist: 8,
+  primMstArrowDist: 9,
   primMstArrowWidth: 2,
   primMstArrowHeight: 2,
 
@@ -134,11 +134,15 @@ sketch.draw = () => {
 const primStrokeWeight = () => 1.5 / params.scale;
 
 const arrowColor = [92, 92, 92];
-const primArrowStroke = (m, i, d, t) =>
-  color([
-    ...arrowColor,
-    E.easeOutQuint(((t > 0.5 ? 1 - t : t) * d) / 15) * 255,
-  ]);
+// const primArrowStroke = (m, i, d, t) =>
+//   color(92, 92, 92, E.easeOutQuint(((t > 0.5 ? 1 - t : t) * d) / 15) * 255);
+
+const primArrowStroke = (m, i, d, t) => {
+  // adjust 8 multiplier to speed up or slow down fade in / out
+  const a = Math.min(1, (((t > 0.5 ? 1 - t : t) * d) / 15) * 8);
+  return color(92, 92, 92, a * 255);
+};
+
 const primArrowInterp = (m, i, d) => m / (100 * d);
 
 // ----------------------------------------------------------------------------
@@ -274,6 +278,7 @@ const computeCells = () => {
         strokeWeight: primStrokeWeight,
         extendStart: -3,
         extendEnd: -3,
+        // showLine: false,
         showArrows: true,
         arrowDistance: params.primMstArrowDist,
         arrowWidth: params.primMstArrowWidth,

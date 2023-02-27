@@ -116,7 +116,7 @@ export default function tp(
   });
   pane.addInput(params, "cellTrimR", {
     min: 0,
-    max: 100,
+    max: 200,
     step: 1,
   });
   pane.addSeparator();

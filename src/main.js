@@ -195,23 +195,13 @@ const computeCells = () => {
       )
   );
 
-  // trim strays
-  // find a circle A that encompasses remaining cells
+  // find a circle A that encompasses the remaining cells
   car = furthestDistOfCells(vCells, 0, 0);
 
-  // shrink the circle and filter again
-  carr = car - params.cellTrimR;
+  // shrink the circle to create circle B
+  cbr = car - params.cellTrimR;
 
-  const tvc = vCells.filter(
-    (vc) =>
-      dist(0, 0, vc.site.x, vc.site.y) < carr &&
-      vc.points.every((p) => dist(0, 0, p.x, p.y) < carr)
-  );
-
-  // find another circle B that encompasses remaining cells
-  cbr = furthestDistOfCells(tvc, 0, 0);
-
-  // clip cells using circleB
+  // clip cells using circle B
   vCells = vCells.map((vc) => {
     const plen = vc.points.length;
     const points = [];
@@ -368,9 +358,13 @@ const drawCells = () => {
 
   // debug clip circles
   if (params.showCellTrimCircles) {
-    ellipse(0, 0, car * 2);
-    ellipse(0, 0, carr * 2);
-    ellipse(0, 0, cbr * 2);
+    push();
+    stroke(0, 0, 255);
+    circle(0, 0, car * 2);
+
+    stroke(255, 0, 0);
+    circle(0, 0, cbr * 2);
+    pop();
   }
 };
 

@@ -13,7 +13,7 @@ export const presets = [
 
     cellSize: 12,
     cellClipMult: 1,
-    cellTrimR: 40,
+    cellTrimR: 165, // 40,
 
     cellDropOutType: "perlin",
     cellDropOutPercent: 0.4,
@@ -51,7 +51,7 @@ export const presets = [
 
     cellSize: 12,
     cellClipMult: 4,
-    cellTrimR: 16,
+    cellTrimR: 85, // 16,
 
     cellDropOutType: "perlin",
     cellDropOutPercent: 0.4,
@@ -70,7 +70,7 @@ export const presets = [
 
     cellSize: 15,
     cellClipMult: 1,
-    cellTrimR: 40,
+    cellTrimR: 100, // 40,
 
     cellDropOutType: "perlin",
     cellDropOutPercent: 0.4,
@@ -89,7 +89,7 @@ export const presets = [
 
     cellSize: 12,
     cellClipMult: 1,
-    cellTrimR: 40,
+    cellTrimR: 98, // 40,
 
     cellDropOutType: "perlin",
     cellDropOutPercent: 0.4,

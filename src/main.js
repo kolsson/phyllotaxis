@@ -54,6 +54,12 @@ const params = {
   cellClipMult: 1,
   cellTrimR: 0,
 
+  cellDropOutType: "perlin", // 'perlin' or 'mod'
+
+  cellDropOutPercent: 0.4,
+  cellDropOutMult: 1,
+  cellDropOutMod: 10,
+
   // debugging
   showCellTrimCircles: false,
   showCells: true,
@@ -233,8 +239,23 @@ const computeCells = () => {
     return { site: vc.site, points };
   });
 
-  // build our graph and run prim's algorithm
+  // drop out cells (perlin noise)
+  if (params.cellDropOutType === "perlin") {
+    noiseSeed(420);
 
+    vCells = vCells.filter(
+      (vc) =>
+        noise(
+          vc.site.x * params.cellDropOutMult,
+          vc.site.y * params.cellDropOutMult
+        ) > params.cellDropOutPercent
+    );
+  } else if (params.cellDropOutType === "mod") {
+    // drop out cells (mod)
+    vCells = vCells.filter((vc, i) => i % params.cellDropOutMod !== 0);
+  }
+
+  // build our graph and run prim's algorithm
   const graph = [];
   const vclen = vCells.length;
 
@@ -403,7 +424,7 @@ sketch.mousePressed = () => {
     }
   }
 
-  // record where we clicked
+  // record where we clicked for later
   mousePressedX = mouseX;
   mousePressedY = mouseY;
 

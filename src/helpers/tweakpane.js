@@ -11,6 +11,10 @@ const computeKeys = {
   cellSize: true,
   cellClipMult: true,
   cellTrimR: true,
+  cellDropOutType: true,
+  cellDropOutPercent: true,
+  cellDropOutMult: true,
+  cellDropOutMod: true,
 };
 
 export default function tp(
@@ -104,6 +108,7 @@ export default function tp(
     max: 40,
     step: 1,
   });
+  pane.addSeparator();
   pane.addInput(params, "cellClipMult", {
     min: 0.5,
     max: 4,
@@ -112,6 +117,28 @@ export default function tp(
   pane.addInput(params, "cellTrimR", {
     min: 0,
     max: 100,
+    step: 1,
+  });
+  pane.addSeparator();
+  pane.addInput(params, "cellDropOutType", {
+    options: {
+      perlin: "perlin",
+      mod: "mod",
+    },
+  });
+  pane.addInput(params, "cellDropOutPercent", {
+    min: 0,
+    max: 0.95,
+    step: 0.05,
+  });
+  pane.addInput(params, "cellDropOutMult", {
+    min: 0.05,
+    max: 5,
+    step: 0.05,
+  });
+  pane.addInput(params, "cellDropOutMod", {
+    min: 1,
+    max: 50,
     step: 1,
   });
   pane.addSeparator();

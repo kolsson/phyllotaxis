@@ -12,7 +12,7 @@ const computeKeys = {
   cellClipMult: true,
   cellTrimR: true,
   cellDropOutType: true,
-  cellDropOutPercent: true,
+  cellDropOutPerc: true,
   cellDropOutMult: true,
   cellDropOutMod: true,
 };
@@ -80,94 +80,98 @@ export default function tp(
 
   // monitors
   pane.addMonitor(params, "actualCellCount", {});
-  pane.addSeparator();
 
   // core params
-  pane.addInput(params, "cellCount", {
+  const cellsF = pane.addFolder({ title: "Cells" });
+  cellsF.addInput(params, "cellCount", {
     min: 50,
     max: 1000,
     step: 1,
   });
-  pane.addInput(params, "startCell", {
+  cellsF.addInput(params, "startCell", {
     min: 0,
     max: 50,
     step: 1,
   });
-  pane.addInput(params, "cellAngle", {
+  cellsF.addInput(params, "cellAngle", {
     min: 100,
     max: 179,
     step: 1,
   });
-  pane.addInput(params, "cellAngleFrac", {
+  cellsF.addInput(params, "cellAngleFrac", {
     min: 0,
     max: 1,
     step: 0.1,
   });
-  pane.addInput(params, "cellSize", {
+  cellsF.addInput(params, "cellSize", {
     min: 6,
     max: 40,
     step: 1,
   });
-  pane.addSeparator();
-  pane.addInput(params, "cellClipMult", {
+
+  const clipF = pane.addFolder({ title: "Clipping" });
+  clipF.addInput(params, "cellClipMult", {
     min: 0.5,
     max: 4,
     step: 0.1,
   });
-  pane.addInput(params, "cellTrimR", {
+  clipF.addInput(params, "cellTrimR", {
     min: 0,
     max: 200,
     step: 1,
   });
-  pane.addSeparator();
-  pane.addInput(params, "cellDropOutType", {
+
+  const dropOutF = pane.addFolder({ title: "Drop Out" });
+  dropOutF.addInput(params, "cellDropOutType", {
     options: {
       perlin: "perlin",
       mod: "mod",
     },
   });
-  pane.addInput(params, "cellDropOutPercent", {
+  dropOutF.addInput(params, "cellDropOutPerc", {
     min: 0,
     max: 0.95,
     step: 0.05,
   });
-  pane.addInput(params, "cellDropOutMult", {
+  dropOutF.addInput(params, "cellDropOutMult", {
     min: 0.05,
     max: 5,
     step: 0.05,
   });
-  pane.addInput(params, "cellDropOutMod", {
+  dropOutF.addInput(params, "cellDropOutMod", {
     min: 1,
     max: 50,
     step: 1,
   });
-  pane.addSeparator();
-  pane.addInput(params, "primMstArrowDist", {
+
+  const primF = pane.addFolder({ title: "Prim MST" });
+  primF.addInput(params, "primMstArrowDist", {
     min: 5,
     max: 100,
     step: 1,
   });
-  pane.addInput(params, "primMstArrowWidth", {
+  primF.addInput(params, "primMstArrowWidth", {
     min: 1,
     max: 20,
     step: 0.5,
   });
-  pane.addInput(params, "primMstArrowHeight", {
+  primF.addInput(params, "primMstArrowHeight", {
     min: 1,
     max: 20,
     step: 0.5,
   });
-  pane.addSeparator();
 
-  // debugging
-  pane.addInput(params, "showCellTrimCircles", { label: "Show Trim Circles" });
-  pane.addSeparator();
-  pane.addInput(params, "showCells", { label: "Show Cells" });
-  pane.addInput(params, "showCellSites", { label: "Show Cell Sites" });
-  pane.addInput(params, "showPrimMst", { label: "Show Prim MST" });
-  pane.addSeparator();
-  pane.addInput(params, "showCellText", { label: "Show Cell Text" });
-  pane.addInput(params, "textSize", {
+  const debugF = pane.addFolder({ title: "Debug", expanded: false });
+  debugF.addInput(params, "showCellTrimCircles", {
+    label: "Show Trim Circles",
+  });
+  debugF.addSeparator();
+  debugF.addInput(params, "showCells", { label: "Show Cells" });
+  debugF.addInput(params, "showCellSites", { label: "Show Cell Sites" });
+  debugF.addInput(params, "showPrimMst", { label: "Show Prim MST" });
+  debugF.addSeparator();
+  debugF.addInput(params, "showCellText", { label: "Show Cell Text" });
+  debugF.addInput(params, "textSize", {
     label: "Text Size",
     min: 8,
     max: 14,

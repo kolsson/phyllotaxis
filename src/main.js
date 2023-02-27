@@ -56,7 +56,7 @@ const params = {
 
   cellDropOutType: "perlin", // 'perlin' or 'mod'
 
-  cellDropOutPercent: 0.4,
+  cellDropOutPerc: 0.4,
   cellDropOutMult: 1,
   cellDropOutMod: 10,
 
@@ -246,7 +246,7 @@ const computeCells = () => {
         noise(
           vc.site.x * params.cellDropOutMult,
           vc.site.y * params.cellDropOutMult
-        ) > params.cellDropOutPercent
+        ) > params.cellDropOutPerc
     );
   } else if (params.cellDropOutType === "mod") {
     // drop out cells (mod)

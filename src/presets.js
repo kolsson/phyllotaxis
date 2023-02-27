@@ -16,7 +16,7 @@ export const presets = [
     cellTrimR: 165, // 40,
 
     cellDropOutType: "perlin",
-    cellDropOutPercent: 0.4,
+    cellDropOutPerc: 0.4,
     cellDropOutMult: 1.0,
     cellDropOutMod: 10,
   },
@@ -35,7 +35,7 @@ export const presets = [
     cellTrimR: 40,
 
     cellDropOutType: "mod",
-    cellDropOutPercent: 0,
+    cellDropOutPerc: 0,
     cellDropOutMult: 1,
     cellDropOutMod: 5,
   },
@@ -54,7 +54,7 @@ export const presets = [
     cellTrimR: 85, // 16,
 
     cellDropOutType: "perlin",
-    cellDropOutPercent: 0.4,
+    cellDropOutPerc: 0.4,
     cellDropOutMult: 1.5,
     cellDropOutMod: 10,
   },
@@ -73,7 +73,7 @@ export const presets = [
     cellTrimR: 100, // 40,
 
     cellDropOutType: "perlin",
-    cellDropOutPercent: 0.4,
+    cellDropOutPerc: 0.4,
     cellDropOutMult: 1,
     cellDropOutMod: 10,
   },
@@ -92,7 +92,7 @@ export const presets = [
     cellTrimR: 99, // 40,
 
     cellDropOutType: "perlin",
-    cellDropOutPercent: 0.4,
+    cellDropOutPerc: 0.4,
     cellDropOutMult: 1,
     cellDropOutMod: 10,
   },
@@ -111,7 +111,7 @@ export const presets = [
     cellTrimR: 0,
 
     cellDropOutType: "perlin",
-    cellDropOutPercent: 0.4,
+    cellDropOutPerc: 0.4,
     cellDropOutMult: 1,
     cellDropOutMod: 10,
   },
@@ -130,7 +130,7 @@ export const presets = [
     cellTrimR: 0,
 
     cellDropOutType: "perlin",
-    cellDropOutPercent: 0.4,
+    cellDropOutPerc: 0.4,
     cellDropOutMult: 1,
     cellDropOutMod: 10,
   },

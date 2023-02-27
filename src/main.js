@@ -381,8 +381,8 @@ sketch.keyReleased = () => {
 
 sketch.mouseMoved = () => {
   // check for cell rollovers
-  const x = (mouseX + xl) / params.scale;
-  const y = (mouseY + yt) / params.scale;
+  const x = (mouseX + xl) / params.scale - params.canvasX;
+  const y = (mouseY + yt) / params.scale - params.canvasY;
 
   const i = voronoiGetSite(vCells, x, y);
 
@@ -396,8 +396,8 @@ sketch.mousePressed = () => {
 
   if (!dragging) {
     if (mouseX >= 0 && mouseX < width && mouseY >= 0 && mouseY < height) {
-      const x = (mouseX + xl) / params.scale;
-      const y = (mouseY + yt) / params.scale;
+      const x = (mouseX + xl) / params.scale - params.canvasX;
+      const y = (mouseY + yt) / params.scale - params.canvasY;
 
       selectedVCellIndex = voronoiGetSite(vCells, x, y);
     }

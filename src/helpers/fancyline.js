@@ -55,6 +55,13 @@ export default class FancyLine {
     this.compute();
   }
 
+  setArrowDistance(ad) {
+    // clear our arrows array
+    this.arrows = new Array(this.arrowCount);
+
+    this.arrowDistance = ad;
+  }
+
   compute() {
     // apply extendStart and extendEnd
 
@@ -162,6 +169,12 @@ export default class FancyLine {
         // make sure our t wraps around
         t = ((t * 1000) % 1000) / 1000;
 
+        // check if arrow is beyond our base d
+        if (t * (d / based) > 1) {
+          this.arrows[i] = undefined; // enter an empty arrow record
+          continue;
+        }
+
         // our arrow end
         const lerpx = lerp(sx, ex, t);
         const lerpy = lerp(sy, ey, t);
@@ -239,10 +252,12 @@ export default class FancyLine {
       if (typeof this.arrowInterp === "function") this.computeArrows(m);
 
       this.arrows.forEach((a) => {
-        if (a.stroke !== undefined) stroke(a.stroke);
+        if (a) {
+          if (a.stroke !== undefined) stroke(a.stroke);
 
-        line(a.end.x, a.end.y, a.left.x, a.left.y);
-        line(a.end.x, a.end.y, a.right.x, a.right.y);
+          line(a.end.x, a.end.y, a.left.x, a.left.y);
+          line(a.end.x, a.end.y, a.right.x, a.right.y);
+        }
       });
     }
   }

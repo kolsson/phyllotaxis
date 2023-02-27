@@ -142,6 +142,22 @@ export default function tp(
     step: 1,
   });
   pane.addSeparator();
+  pane.addInput(params, "primMstArrowDist", {
+    min: 5,
+    max: 100,
+    step: 1,
+  });
+  pane.addInput(params, "primMstArrowWidth", {
+    min: 1,
+    max: 20,
+    step: 0.5,
+  });
+  pane.addInput(params, "primMstArrowHeight", {
+    min: 1,
+    max: 20,
+    step: 0.5,
+  });
+  pane.addSeparator();
 
   // debugging
   pane.addInput(params, "showCellTrimCircles", { label: "Show Trim Circles" });

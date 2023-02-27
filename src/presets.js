@@ -89,7 +89,7 @@ export const presets = [
 
     cellSize: 12,
     cellClipMult: 1,
-    cellTrimR: 98, // 40,
+    cellTrimR: 99, // 40,
 
     cellDropOutType: "perlin",
     cellDropOutPercent: 0.4,

@@ -60,6 +60,10 @@ const params = {
   cellDropOutMult: 1,
   cellDropOutMod: 10,
 
+  primMstArrowDist: 8,
+  primMstArrowWidth: 2,
+  primMstArrowHeight: 2,
+
   // debugging
   showCellTrimCircles: false,
   showCells: true,
@@ -271,7 +275,9 @@ const computeCells = () => {
         extendStart: -3,
         extendEnd: -3,
         showArrows: true,
-        arrowDistance: 8,
+        arrowDistance: params.primMstArrowDist,
+        arrowWidth: params.primMstArrowWidth,
+        arrowHeight: params.primMstArrowHeight,
         arrowStroke: primArrowStroke,
         arrowInterp: primArrowInterp,
       })
@@ -352,7 +358,13 @@ const drawCells = () => {
   // prim tree
   if (params.showPrimMst) {
     push();
-    primLines.forEach((p) => p.draw());
+    primLines.forEach((p) => {
+      if (params.primMstArrowDist !== p.arrowDistance)
+        p.setArrowDistance(params.primMstArrowDist);
+      p.arrowWidth = params.primMstArrowWidth;
+      p.arrowHeight = params.primMstArrowHeight;
+      p.draw();
+    });
     pop();
   }
 

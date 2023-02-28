@@ -86,8 +86,9 @@ export default class FancyLine {
   // private compute methods
   // ----------------------------------------------------------------------------
 
-  computeBezierDistance(sx, sy, ex, ey, st = 0, et = 1, pieces = 25) {
-    // pieces = 25 is an arbitrary magic number
+  computeBezierDistances(sx, sy, ex, ey, n = 20) {
+    // numLengths is an arbitrary magic number; 20 should be precise enough for
+    // most cases but 100 is better for detailed curves
 
     if (sx === undefined) sx = this.fsp.x;
     if (sy === undefined) sy = this.fsp.y;
@@ -97,11 +98,13 @@ export default class FancyLine {
 
     // chop our bezier curve up into pieces, add the distance of all the pieces
 
+    const lengths = new Array(n);
+    lengths[0] = 0;
     let d = 0;
 
-    for (let p = 1; p < pieces; p++) {
-      const cst = (p - 1) / pieces;
-      const cet = p / pieces;
+    for (let i = 1; i < n; i++) {
+      const cst = (i - 1) / n;
+      const cet = i / n;
 
       const csx = bezierPoint(sx, this.bezierC1x, this.bezierC2x, ex, cst);
       const csy = bezierPoint(sy, this.bezierC1y, this.bezierC2y, ey, cst);
@@ -110,9 +113,43 @@ export default class FancyLine {
       const cey = bezierPoint(sy, this.bezierC1y, this.bezierC2y, ey, cet);
 
       d += dist(csx, csy, cex, cey);
+      lengths[i] = d;
     }
 
-    return d;
+    return [d, lengths];
+  }
+
+  alp(t) {
+    // arc length parameterization
+    // https://gamedev.stackexchange.com/questions/5373/moving-ships-between-two-planets-along-a-bezier-missing-some-equations-for-acce/5427#5427
+
+    const n = this.bezierLengths.length - 1; // important to subtract 1
+    const targetLength = t * this.bezierd;
+
+    let low = 0,
+      high = n,
+      index = 0;
+
+    while (low < high) {
+      index = low + (((high - low) / 2) | 0);
+
+      if (this.bezierLengths[index] < targetLength) low = index + 1;
+      else high = index;
+    }
+
+    if (this.bezierLengths[index] > targetLength) index--;
+
+    const lengthBefore = this.bezierLengths[index];
+    if (lengthBefore === targetLength) {
+      return index / n;
+    } else {
+      return (
+        (index +
+          (targetLength - lengthBefore) /
+            (this.bezierLengths[index + 1] - lengthBefore)) /
+        n
+      );
+    }
   }
 
   compute() {
@@ -167,7 +204,7 @@ export default class FancyLine {
       this.bezierC2y = c2y + this.bezierSwing * Math.cos(theta);
 
       // set our bezier distance
-      this.bezierd = this.computeBezierDistance();
+      [this.bezierd, this.bezierLengths] = this.computeBezierDistances();
     }
 
     // compute our arrows
@@ -330,9 +367,8 @@ export default class FancyLine {
       // map our t onto st, et
       t = map(t, 0, 1, st, et);
 
-      // apply arc-length parameterization
-      // https://gamedev.stackexchange.com/questions/5373/moving-ships-between-two-planets-along-a-bezier-missing-some-equations-for-acce/5427#5427
-      // HERE
+      // apply arc length parameterization
+      t = this.alp(t);
 
       // check if arrow is beyond the end of our bezier
       if (t > 1) {

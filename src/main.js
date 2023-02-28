@@ -271,14 +271,16 @@ const computeCells = () => {
   primLines = primMst.map(
     (e, index) =>
       new FancyLine({
+        type: "bezier",
         sp: vCells[e[0]].site,
         ep: vCells[e[1]].site,
-        index, //: e[0], // set our index to our origin site
+        index, // each line has a unique index
+        // index: e[0], // set our index to our site
         stroke: [92, 92, 92],
         strokeWeight: primStrokeWeight,
         extendStart: -3,
         extendEnd: -3,
-        // showLine: false,
+        bezierSwing: random([-1, 1]),
         showArrows: true,
         arrowDistance: params.primMstArrowDist,
         arrowWidth: params.primMstArrowWidth,
@@ -291,11 +293,13 @@ const computeCells = () => {
   // a test fancyline
   // primLines.push(
   //   new FancyLine({
+  //     type: "bezier",
   //     sp: { x: -200, y: -200 },
   //     ep: { x: 200, y: -200 },
   //     index: -1,
   //     stroke: [92, 92, 92],
   //     strokeWeight: primStrokeWeight,
+  //     bezierSwing: 200,
   //     showArrows: true,
   //     arrowDistance: 30,
   //     arrowStroke: primArrowStroke,

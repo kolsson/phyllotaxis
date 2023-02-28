@@ -271,7 +271,7 @@ const computeCells = () => {
   primLines = primMst.map(
     (e, index) =>
       new FancyLine({
-        // type: "bezier",
+        type: "bezier",
         sp: vCells[e[0]].site,
         ep: vCells[e[1]].site,
         index, // each line has a unique index
@@ -280,7 +280,7 @@ const computeCells = () => {
         strokeWeight: primStrokeWeight,
         extendStart: -3,
         extendEnd: -3,
-        bezierSwing: random([-1, 1]),
+        bezierSwing: random([-2, 2]),
         showArrows: true,
         arrowDistance: params.primMstArrowDist,
         arrowWidth: params.primMstArrowWidth,
@@ -291,23 +291,23 @@ const computeCells = () => {
   );
 
   // a test fancyline
-  primLines.push(
-    new FancyLine({
-      type: "bezier",
-      sp: { x: -200, y: -200 },
-      ep: { x: 200, y: -200 },
-      index: -1,
-      stroke: [92, 92, 92],
-      strokeWeight: primStrokeWeight,
-      bezierSwing: 200,
-      showArrows: true,
-      arrowDistance: params.primMstArrowDist,
-      arrowWidth: params.primMstArrowWidth,
-      arrowHeight: params.primMstArrowHeight,
-      arrowStroke: primArrowStroke,
-      arrowInterp: primArrowInterp,
-    })
-  );
+  // primLines.push(
+  //   new FancyLine({
+  //     type: "bezier",
+  //     sp: { x: -200, y: -200 },
+  //     ep: { x: 200, y: -200 },
+  //     index: -1,
+  //     stroke: [92, 92, 92],
+  //     strokeWeight: primStrokeWeight,
+  //     bezierSwing: 200,
+  //     showArrows: true,
+  //     arrowDistance: params.primMstArrowDist,
+  //     arrowWidth: params.primMstArrowWidth,
+  //     arrowHeight: params.primMstArrowHeight,
+  //     arrowStroke: primArrowStroke,
+  //     arrowInterp: primArrowInterp,
+  //   })
+  // );
 
   // update our monitor
   params.actualCellCount = vCells.length;

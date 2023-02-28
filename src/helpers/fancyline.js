@@ -86,8 +86,8 @@ export default class FancyLine {
   // private compute methods
   // ----------------------------------------------------------------------------
 
-  computeBezierDistance(st = 0, et = 1, sx, sy, ex, ey, pieces = 20) {
-    // pieces = 20 is an arbitrary magic number
+  computeBezierDistance(sx, sy, ex, ey, st = 0, et = 1, pieces = 25) {
+    // pieces = 25 is an arbitrary magic number
 
     if (sx === undefined) sx = this.fsp.x;
     if (sy === undefined) sy = this.fsp.y;
@@ -100,8 +100,8 @@ export default class FancyLine {
     let d = 0;
 
     for (let p = 1; p < pieces; p++) {
-      const cst = map((p - 1) / pieces, 0, 1, st, et);
-      const cet = map(p / pieces, 0, 1, st, et);
+      const cst = (p - 1) / pieces;
+      const cet = p / pieces;
 
       const csx = bezierPoint(sx, this.bezierC1x, this.bezierC2x, ex, cst);
       const csy = bezierPoint(sy, this.bezierC1y, this.bezierC2y, ey, cst);
@@ -182,46 +182,35 @@ export default class FancyLine {
     let { x: ex, y: ey } = this.fep;
 
     let d = this.lined;
-    let based = d;
 
-    let unitx = (ex - sx) / d;
-    let unity = (ey - sy) / d;
+    // our units (for drawing the arrow)
 
-    // adjust our start / end points
+    const unitx = (ex - sx) / d;
+    const unity = (ey - sy) / d;
+
+    // our t values we want to map onto based on how we adjust our starting
+    // and ending points on the curve
+
+    let st = 0;
+    let et = 1;
+
+    // adjust our start / end t values
 
     if (!this.arrowInterpIgnoreHeight) {
       // take our arrow height into account when calculating our lerpx and lerpy
 
-      sx = sx + unitx * this.arrowHeight;
-      sy = sy + unity * this.arrowHeight;
-
-      // recalculate our distance and unitx, unity
-      d = dist(sx, sy, ex, ey);
-      based = d; // update our base d
-
-      unitx = (ex - sx) / d;
-      unity = (ey - sy) / d;
+      st = this.arrowHeight / d;
     }
 
     if (this.arrowDistance !== undefined) {
-      // extend our endpoint so we can cleanly divide it by our distance
+      // extend our endpoint so we can cleanly divide it by our arrow distance
 
       // divide d by arrowDistance, take the ceiling, multiply by arrowDistance
       // this is our desired length
 
       // arrowCount required to cover line
       ac = Math.ceil(d / this.arrowDistance);
-      const adj = ac * this.arrowDistance - d;
-
-      ex = ex + unitx * adj;
-      ey = ey + unity * adj;
-
-      // recalculate our distance and unitx, unity
-      d = dist(sx, sy, ex, ey);
-      // do NOT update our base d (of course)
-
-      unitx = (ex - sx) / d;
-      unity = (ey - sy) / d;
+      et = 1 + (ac * this.arrowDistance - d) / d;
     }
 
     for (let i = 0; i < ac; i++) {
@@ -239,8 +228,11 @@ export default class FancyLine {
       // make sure our t wraps around
       t = ((t * 1000) % 1000) / 1000;
 
-      // check if arrow is beyond our base d
-      if (t * (d / based) > 1) {
+      // map our t onto st, et
+      t = map(t, 0, 1, st, et);
+
+      // check if arrow is beyond the end of our line
+      if (t > 1) {
         this.arrows[i] = undefined; // enter an empty arrow record
         continue;
       }
@@ -271,14 +263,14 @@ export default class FancyLine {
       };
 
       // compute our arrow stroke
-
-      // if we've extended our d because we have an arrowDistance,
-      // we will need to adjust our t based on how much we've extended our d
+      // we map our t from st, et -> 0, et so if we've adjusted our
+      // start point (so the arrowhead doesn't appear off the line)
+      // we can still fade in correctly
 
       if (this.arrowStroke !== undefined) {
         a.stroke =
           typeof this.arrowStroke === "function"
-            ? this.arrowStroke(m, this.index, based, t * (d / based))
+            ? this.arrowStroke(m, this.index, d, map(t, st, et, 0, et))
             : this.arrowStroke;
       }
 
@@ -294,7 +286,6 @@ export default class FancyLine {
     let { x: ex, y: ey } = this.fep;
 
     let d = this.bezierd;
-    let based = d;
 
     // our t values we want to map onto based on how we adjust our starting
     // and ending points on the curve
@@ -311,16 +302,14 @@ export default class FancyLine {
     }
 
     if (this.arrowDistance !== undefined) {
-      // extend our endpoint so we can cleanly divide it by our distance
+      // extend our endpoint so we can cleanly divide it by our arrow distance
 
       // divide d by arrowDistance, take the ceiling, multiply by arrowDistance
       // this is our desired length
 
       // arrowCount required to cover line
       ac = Math.ceil(d / this.arrowDistance);
-      const adj = ac * this.arrowDistance - d;
-
-      et = 1 + adj / d;
+      et = 1 + (ac * this.arrowDistance - d) / d;
     }
 
     for (let i = 0; i < ac; i++) {
@@ -341,9 +330,11 @@ export default class FancyLine {
       // map our t onto st, et
       t = map(t, 0, 1, st, et);
 
-      // apply arc-length parameterization HERE
+      // apply arc-length parameterization
+      // https://gamedev.stackexchange.com/questions/5373/moving-ships-between-two-planets-along-a-bezier-missing-some-equations-for-acce/5427#5427
+      // HERE
 
-      // check if arrow is beyond the end of our line
+      // check if arrow is beyond the end of our bezier
       if (t > 1) {
         this.arrows[i] = undefined; // enter an empty arrow record
         continue;
@@ -381,14 +372,14 @@ export default class FancyLine {
       };
 
       // compute our arrow stroke
-
-      // if we've extended our d because we have an arrowDistance,
-      // we will need to adjust our t based on how much we've extended our d
+      // we map our t from st, et -> 0, et so if we've adjusted our
+      // start point (so the arrowhead doesn't appear off the line)
+      // we can still fade in correctly
 
       if (this.arrowStroke !== undefined) {
         a.stroke =
           typeof this.arrowStroke === "function"
-            ? this.arrowStroke(m, this.index, based, t * (d / based))
+            ? this.arrowStroke(m, this.index, d, map(t, st, et, 0, et))
             : this.arrowStroke;
       }
 

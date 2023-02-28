@@ -86,6 +86,35 @@ export default class FancyLine {
   // private compute methods
   // ----------------------------------------------------------------------------
 
+  computeBezierDistance(st = 0, et = 1, sx, sy, ex, ey, pieces = 20) {
+    // pieces = 20 is an arbitrary magic number
+
+    if (sx === undefined) sx = this.fsp.x;
+    if (sy === undefined) sy = this.fsp.y;
+
+    if (ex === undefined) ex = this.fep.x;
+    if (ey === undefined) ey = this.fep.y;
+
+    // chop our bezier curve up into pieces, add the distance of all the pieces
+
+    let d = 0;
+
+    for (let p = 1; p < pieces; p++) {
+      const cst = map((p - 1) / pieces, 0, 1, st, et);
+      const cet = map(p / pieces, 0, 1, st, et);
+
+      const csx = bezierPoint(sx, this.bezierC1x, this.bezierC2x, ex, cst);
+      const csy = bezierPoint(sy, this.bezierC1y, this.bezierC2y, ey, cst);
+
+      const cex = bezierPoint(sx, this.bezierC1x, this.bezierC2x, ex, cet);
+      const cey = bezierPoint(sy, this.bezierC1y, this.bezierC2y, ey, cet);
+
+      d += dist(csx, csy, cex, cey);
+    }
+
+    return d;
+  }
+
   compute() {
     // apply extendStart and extendEnd
 
@@ -136,6 +165,9 @@ export default class FancyLine {
       this.bezierC1y = c1y + this.bezierSwing * Math.cos(theta);
       this.bezierC2x = c2x + this.bezierSwing * -Math.sin(theta);
       this.bezierC2y = c2y + this.bezierSwing * Math.cos(theta);
+
+      // set our bezier distance
+      this.bezierd = this.computeBezierDistance();
     }
 
     // compute our arrows
@@ -155,7 +187,7 @@ export default class FancyLine {
     let unitx = (ex - sx) / d;
     let unity = (ey - sy) / d;
 
-    // get our start point for lerping
+    // adjust our start / end points
 
     if (!this.arrowInterpIgnoreHeight) {
       // take our arrow height into account when calculating our lerpx and lerpy
@@ -256,41 +288,26 @@ export default class FancyLine {
   }
 
   computeBezierArrows(m) {
-    // when we are a bezier we still calculate our distance as a straight line
-    // the larger the curve, the more problems this may introduce
-    // e.g., our distance between arrows will be closer where the curve is
-    // sharper; our distance in general will not be consistent
-    // WE NEED TO REWRITE OUR ARROW HANDLING CODE TO BE BEZIER SPECIFIC
-
     let ac = this.arrowCount;
 
     let { x: sx, y: sy } = this.fsp;
     let { x: ex, y: ey } = this.fep;
 
-    let d = this.lined;
+    let d = this.bezierd;
     let based = d;
 
-    let unitx = (ex - sx) / d;
-    let unity = (ey - sy) / d;
+    // our t values we want to map onto based on how we adjust our starting
+    // and ending points on the curve
 
-    // get our start point for lerping
+    let st = 0;
+    let et = 1;
+
+    // adjust our start / end t values
 
     if (!this.arrowInterpIgnoreHeight) {
       // take our arrow height into account when calculating our lerpx and lerpy
 
-      // this is not precise because we are calculating our distance as a straight line
-
-      const et = this.arrowHeight / d;
-
-      sx = bezierPoint(sx, this.bezierC1x, this.bezierC2x, ex, et);
-      sy = bezierPoint(sy, this.bezierC1y, this.bezierC2y, ey, et);
-
-      // recalculate our distance and unitx, unity
-      d = dist(sx, sy, ex, ey);
-      based = d; // update our base d
-
-      unitx = (ex - sx) / d;
-      unity = (ey - sy) / d;
+      st = this.arrowHeight / d;
     }
 
     if (this.arrowDistance !== undefined) {
@@ -303,8 +320,7 @@ export default class FancyLine {
       ac = Math.ceil(d / this.arrowDistance);
       const adj = ac * this.arrowDistance - d;
 
-      // we can't really do anything here without reworking the way
-      // we handle bezier distance
+      et = 1 + adj / d;
     }
 
     for (let i = 0; i < ac; i++) {
@@ -322,8 +338,13 @@ export default class FancyLine {
       // make sure our t wraps around
       t = ((t * 1000) % 1000) / 1000;
 
-      // check if arrow is beyond our base d
-      if (t * (d / based) > 1) {
+      // map our t onto st, et
+      t = map(t, 0, 1, st, et);
+
+      // apply arc-length parameterization HERE
+
+      // check if arrow is beyond the end of our line
+      if (t > 1) {
         this.arrows[i] = undefined; // enter an empty arrow record
         continue;
       }
@@ -337,10 +358,10 @@ export default class FancyLine {
 
       // our arrow base
 
-      const et = t - this.arrowHeight / d;
+      const bt = t - this.arrowHeight / d;
 
-      const bx = bezierPoint(sx, this.bezierC1x, this.bezierC2x, ex, et);
-      const by = bezierPoint(sy, this.bezierC1y, this.bezierC2y, ey, et);
+      const bx = bezierPoint(sx, this.bezierC1x, this.bezierC2x, ex, bt);
+      const by = bezierPoint(sy, this.bezierC1y, this.bezierC2y, ey, bt);
 
       // angle perpendicular to our line to get our arrow left and right
 

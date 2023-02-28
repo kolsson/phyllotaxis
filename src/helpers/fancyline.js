@@ -109,11 +109,8 @@ export default class FancyLine {
 
     // store our line distance for later
 
-    const sx = this.fsp.x;
-    const sy = this.fsp.y;
-
-    const ex = this.fep.x;
-    const ey = this.fep.y;
+    const { x: sx, y: sy } = this.fsp;
+    const { x: ex, y: ey } = this.fep;
 
     this.lined = dist(sx, sy, ex, ey);
 
@@ -146,169 +143,246 @@ export default class FancyLine {
     this.computeArrows();
   }
 
+  computeLineArrows(m) {
+    let ac = this.arrowCount;
+
+    let { x: sx, y: sy } = this.fsp;
+    let { x: ex, y: ey } = this.fep;
+
+    let d = this.lined;
+    let based = d;
+
+    let unitx = (ex - sx) / d;
+    let unity = (ey - sy) / d;
+
+    // get our start point for lerping
+
+    if (!this.arrowInterpIgnoreHeight) {
+      // take our arrow height into account when calculating our lerpx and lerpy
+
+      sx = sx + unitx * this.arrowHeight;
+      sy = sy + unity * this.arrowHeight;
+
+      // recalculate our distance and unitx, unity
+      d = dist(sx, sy, ex, ey);
+      based = d; // update our base d
+
+      unitx = (ex - sx) / d;
+      unity = (ey - sy) / d;
+    }
+
+    if (this.arrowDistance !== undefined) {
+      // extend our endpoint so we can cleanly divide it by our distance
+
+      // divide d by arrowDistance, take the ceiling, multiply by arrowDistance
+      // this is our desired length
+
+      // arrowCount required to cover line
+      ac = Math.ceil(d / this.arrowDistance);
+      const adj = ac * this.arrowDistance - d;
+
+      ex = ex + unitx * adj;
+      ey = ey + unity * adj;
+
+      // recalculate our distance and unitx, unity
+      d = dist(sx, sy, ex, ey);
+      // do NOT update our base d (of course)
+
+      unitx = (ex - sx) / d;
+      unity = (ey - sy) / d;
+    }
+
+    for (let i = 0; i < ac; i++) {
+      const a = {};
+
+      let t =
+        typeof this.arrowInterp === "function"
+          ? this.arrowInterp(m, this.index, d)
+          : this.arrowInterp;
+
+      // we divide line distance by count and
+      // adjust our t based on our arrow index
+      t = t - i / ac;
+
+      // make sure our t wraps around
+      t = ((t * 1000) % 1000) / 1000;
+
+      // check if arrow is beyond our base d
+      if (t * (d / based) > 1) {
+        this.arrows[i] = undefined; // enter an empty arrow record
+        continue;
+      }
+
+      // our arrow tip
+
+      const lerpx = lerp(sx, ex, t);
+      const lerpy = lerp(sy, ey, t);
+
+      a.end = { x: lerpx, y: lerpy };
+
+      // our arrow base
+
+      const bx = lerpx + unitx * -this.arrowHeight;
+      const by = lerpy + unity * -this.arrowHeight;
+
+      // angle perpendicular to our line to get our arrow left and right
+      const theta = Math.atan2(ey - sy, ex - sx);
+
+      a.left = {
+        x: bx + this.arrowWidth * -Math.sin(theta),
+        y: by + this.arrowWidth * Math.cos(theta),
+      };
+
+      a.right = {
+        x: bx + this.arrowWidth * Math.sin(theta),
+        y: by + this.arrowWidth * -Math.cos(theta),
+      };
+
+      // compute our arrow stroke
+
+      // if we've extended our d because we have an arrowDistance,
+      // we will need to adjust our t based on how much we've extended our d
+
+      if (this.arrowStroke !== undefined) {
+        a.stroke =
+          typeof this.arrowStroke === "function"
+            ? this.arrowStroke(m, this.index, based, t * (d / based))
+            : this.arrowStroke;
+      }
+
+      // store our arrow
+      this.arrows[i] = a;
+    }
+  }
+
+  computeBezierArrows(m) {
+    // when we are a bezier we still calculate our distance as a straight line
+    // the larger the curve, the more problems this may introduce
+    // e.g., our distance between arrows will be closer where the curve is
+    // sharper; our distance in general will not be consistent
+    // WE NEED TO REWRITE OUR ARROW HANDLING CODE TO BE BEZIER SPECIFIC
+
+    let ac = this.arrowCount;
+
+    let { x: sx, y: sy } = this.fsp;
+    let { x: ex, y: ey } = this.fep;
+
+    let d = this.lined;
+    let based = d;
+
+    let unitx = (ex - sx) / d;
+    let unity = (ey - sy) / d;
+
+    // get our start point for lerping
+
+    if (!this.arrowInterpIgnoreHeight) {
+      // take our arrow height into account when calculating our lerpx and lerpy
+
+      // this is not precise because we are calculating our distance as a straight line
+
+      const et = this.arrowHeight / d;
+
+      sx = bezierPoint(sx, this.bezierC1x, this.bezierC2x, ex, et);
+      sy = bezierPoint(sy, this.bezierC1y, this.bezierC2y, ey, et);
+
+      // recalculate our distance and unitx, unity
+      d = dist(sx, sy, ex, ey);
+      based = d; // update our base d
+
+      unitx = (ex - sx) / d;
+      unity = (ey - sy) / d;
+    }
+
+    if (this.arrowDistance !== undefined) {
+      // extend our endpoint so we can cleanly divide it by our distance
+
+      // divide d by arrowDistance, take the ceiling, multiply by arrowDistance
+      // this is our desired length
+
+      // arrowCount required to cover line
+      ac = Math.ceil(d / this.arrowDistance);
+      const adj = ac * this.arrowDistance - d;
+
+      // we can't really do anything here without reworking the way
+      // we handle bezier distance
+    }
+
+    for (let i = 0; i < ac; i++) {
+      const a = {};
+
+      let t =
+        typeof this.arrowInterp === "function"
+          ? this.arrowInterp(m, this.index, d)
+          : this.arrowInterp;
+
+      // we divide line distance by count and
+      // adjust our t based on our arrow index
+      t = t - i / ac;
+
+      // make sure our t wraps around
+      t = ((t * 1000) % 1000) / 1000;
+
+      // check if arrow is beyond our base d
+      if (t * (d / based) > 1) {
+        this.arrows[i] = undefined; // enter an empty arrow record
+        continue;
+      }
+
+      // our arrow tip
+
+      const lerpx = bezierPoint(sx, this.bezierC1x, this.bezierC2x, ex, t);
+      const lerpy = bezierPoint(sy, this.bezierC1y, this.bezierC2y, ey, t);
+
+      a.end = { x: lerpx, y: lerpy };
+
+      // our arrow base
+
+      const et = t - this.arrowHeight / d;
+
+      const bx = bezierPoint(sx, this.bezierC1x, this.bezierC2x, ex, et);
+      const by = bezierPoint(sy, this.bezierC1y, this.bezierC2y, ey, et);
+
+      // angle perpendicular to our line to get our arrow left and right
+
+      const tx = bezierTangent(sx, this.bezierC1x, this.bezierC2x, ex, t);
+      const ty = bezierTangent(sy, this.bezierC1y, this.bezierC2y, ey, t);
+
+      const theta = Math.atan2(ty, tx);
+
+      a.left = {
+        x: bx + this.arrowWidth * -Math.sin(theta),
+        y: by + this.arrowWidth * Math.cos(theta),
+      };
+
+      a.right = {
+        x: bx + this.arrowWidth * Math.sin(theta),
+        y: by + this.arrowWidth * -Math.cos(theta),
+      };
+
+      // compute our arrow stroke
+
+      // if we've extended our d because we have an arrowDistance,
+      // we will need to adjust our t based on how much we've extended our d
+
+      if (this.arrowStroke !== undefined) {
+        a.stroke =
+          typeof this.arrowStroke === "function"
+            ? this.arrowStroke(m, this.index, based, t * (d / based))
+            : this.arrowStroke;
+      }
+
+      // store our arrow
+      this.arrows[i] = a;
+    }
+  }
+
   computeArrows(m) {
     if (
       this.showArrows &&
       (this.arrowCount > 0 || this.arrowDistance !== undefined)
     ) {
-      // when we are a bezier we still calculate our distance as a straight line
-      // the larger the curve, the more problems this may introduce
-      // e.g., our distance between arrows will be closer where the curve is
-      // sharper; our distance in general will not be consistent
-      // WE NEED TO REWRITE OUR ARROW HANDLING CODE TO BE BEZIER SPECIFIC
-
-      let ac = this.arrowCount;
-
-      let sx = this.fsp.x;
-      let sy = this.fsp.y;
-
-      let ex = this.fep.x;
-      let ey = this.fep.y;
-
-      let d = this.lined;
-      let based = d;
-
-      let unitx = (ex - sx) / d;
-      let unity = (ey - sy) / d;
-
-      // get our start point for lerping
-
-      if (!this.arrowInterpIgnoreHeight) {
-        // take our arrow height into account when calculating our lerpx and lerpy
-
-        if (this.type === "line") {
-          sx = sx + unitx * this.arrowHeight;
-          sy = sy + unity * this.arrowHeight;
-        } else if (this.type === "bezier") {
-          // this is not precise because we are calculating our distance as a straight line
-
-          const et = this.arrowHeight / d;
-
-          sx = bezierPoint(sx, this.bezierC1x, this.bezierC2x, ex, et);
-          sy = bezierPoint(sy, this.bezierC1y, this.bezierC2y, ey, et);
-        }
-
-        // recalculate our distance and unitx, unity
-        d = dist(sx, sy, ex, ey);
-        based = d; // update our base d
-
-        unitx = (ex - sx) / d;
-        unity = (ey - sy) / d;
-      }
-
-      if (this.arrowDistance !== undefined) {
-        // extend our endpoint so we can cleanly divide it by our distance
-
-        // divide d by arrowDistance, take the ceiling, multiply by arrowDistance
-        // this is our desired length
-
-        // arrowCount required to cover line
-        ac = Math.ceil(d / this.arrowDistance);
-        const adj = ac * this.arrowDistance - d;
-
-        if (this.type === "line") {
-          ex = ex + unitx * adj;
-          ey = ey + unity * adj;
-
-          // recalculate our distance and unitx, unity
-          d = dist(sx, sy, ex, ey);
-          // do NOT update our base d (of course)
-
-          unitx = (ex - sx) / d;
-          unity = (ey - sy) / d;
-        } else if (this.type === "bezier") {
-          // we can't really do anything here without reworking the way
-          // we handle bezier distance
-        }
-      }
-
-      for (let i = 0; i < ac; i++) {
-        const a = {};
-
-        let t =
-          typeof this.arrowInterp === "function"
-            ? this.arrowInterp(m, this.index, d)
-            : this.arrowInterp;
-
-        // we divide line distance by count and
-        // adjust our t based on our arrow index
-        t = t - i / ac;
-
-        // make sure our t wraps around
-        t = ((t * 1000) % 1000) / 1000;
-
-        // check if arrow is beyond our base d
-        if (t * (d / based) > 1) {
-          this.arrows[i] = undefined; // enter an empty arrow record
-          continue;
-        }
-
-        // our arrow tip
-
-        let lerpx, lerpy;
-
-        if (this.type === "line") {
-          lerpx = lerp(sx, ex, t);
-          lerpy = lerp(sy, ey, t);
-        } else if (this.type === "bezier") {
-          lerpx = bezierPoint(sx, this.bezierC1x, this.bezierC2x, ex, t);
-          lerpy = bezierPoint(sy, this.bezierC1y, this.bezierC2y, ey, t);
-        }
-
-        a.end = { x: lerpx, y: lerpy };
-
-        // our arrow base
-
-        let bx, by;
-
-        if (this.type === "line") {
-          bx = lerpx + unitx * -this.arrowHeight;
-          by = lerpy + unity * -this.arrowHeight;
-        } else {
-          const et = t - this.arrowHeight / d;
-
-          bx = bezierPoint(sx, this.bezierC1x, this.bezierC2x, ex, et);
-          by = bezierPoint(sy, this.bezierC1y, this.bezierC2y, ey, et);
-        }
-
-        // angle perpendicular to our line to get our arrow left and right
-
-        let theta;
-
-        if (this.type === "line") {
-          theta = Math.atan2(ey - sy, ex - sx);
-        } else if (this.type === "bezier") {
-          const tx = bezierTangent(sx, this.bezierC1x, this.bezierC2x, ex, t);
-          const ty = bezierTangent(sy, this.bezierC1y, this.bezierC2y, ey, t);
-
-          theta = Math.atan2(ty, tx);
-        }
-
-        a.left = {
-          x: bx + this.arrowWidth * -Math.sin(theta),
-          y: by + this.arrowWidth * Math.cos(theta),
-        };
-
-        a.right = {
-          x: bx + this.arrowWidth * Math.sin(theta),
-          y: by + this.arrowWidth * -Math.cos(theta),
-        };
-
-        // compute our arrow stroke
-
-        // if we've extended our d because we have an arrowDistance,
-        // we will need to adjust our t based on how much we've extended our d
-
-        if (this.arrowStroke !== undefined) {
-          a.stroke =
-            typeof this.arrowStroke === "function"
-              ? this.arrowStroke(m, this.index, based, t * (d / based))
-              : this.arrowStroke;
-        }
-
-        // store our arrow
-        this.arrows[i] = a;
-      }
+      if (this.type === "line") this.computeLineArrows(m);
+      else if (this.type === "bezier") this.computeBezierArrows(m);
     }
   }
 

@@ -64,3 +64,6 @@
 
 // distance based
 // const primArrowInterp = (m, i, d) => m / (100 * d);
+
+// distance based staggered by index
+// const primArrowInterp = (m, i, d) => (m + i * 1000) / (100 * d);

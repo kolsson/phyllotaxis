@@ -145,6 +145,7 @@ export default function tp(
   });
 
   const primF = pane.addFolder({ title: "Prim MST" });
+  primF.addInput(params, "primMstShowArrows");
   primF.addInput(params, "primMstArrowDist", {
     min: 5,
     max: 100,

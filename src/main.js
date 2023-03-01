@@ -60,6 +60,7 @@ const params = {
   cellDropOutMult: 1,
   cellDropOutMod: 10,
 
+  primMstShowArrows: true,
   primMstArrowDist: 9,
   primMstArrowWidth: 2,
   primMstArrowHeight: 2,
@@ -134,24 +135,31 @@ sketch.draw = () => {
 const primStrokeWeight = () => 1.5 / params.scale;
 
 const arrowColor = [92, 92, 92];
-// const primArrowStroke = (m, i, d, t) =>
-//   color(92, 92, 92, E.easeOutQuint(((t > 0.5 ? 1 - t : t) * d) / 15) * 255);
-
 const primArrowStroke = (m, i, d, t) => {
   // adjust 8 multiplier to speed up or slow down fade in / out
   const a = Math.min(1, (((t > 0.5 ? 1 - t : t) * d) / 15) * 8);
   return color(92, 92, 92, a * 255);
 };
 
-const primArrowInterp = (m, i, d) => m / (100 * d);
+// use i to stagger things a bit
+const primArrowInterp = (m, i, d) => (m + i * 1000) / (100 * d);
+
+// pick a random -2 or 2 (same as random([-2, 2]))
+const primArrowBezierSwing = (m, i) => 2 * Math.sign(1 - 2 * noise(i));
+
+// const primArrowBezierSwing = (m, i) =>
+//   noise(i) * 30 * Math.sin((m + i * 1000) / 100 + 200 * noise(i));
 
 // ----------------------------------------------------------------------------
 // compute cells
 // ----------------------------------------------------------------------------
 
-let car, carr, cbr;
+let car, cbr;
 
 const computeCells = () => {
+  // reset our random seed
+  noiseSeed(420);
+
   cellPoints = [];
 
   for (let i = params.startCell; i < params.cellCount; i++) {
@@ -183,7 +191,7 @@ const computeCells = () => {
     }
     vCells.push({ site: { ...vd.cells[i].site }, points });
   }
-  // filter our cells, remove cells that touch our diagram edges
+  // rectangle approach: remove cells that touch our diagram edges
   // vCells = vCells.filter((vc) =>
   //   vc.points.every(
   //     (p) =>
@@ -194,7 +202,7 @@ const computeCells = () => {
   //   )
   // );
 
-  // alternate approach: remove cells outside a circle with diameter = width
+  // circle approach: remove cells outside a circle with diameter = width
   vCells = vCells.filter(
     (vc) =>
       dist(0, 0, vc.site.x, vc.site.y) < (width / 2) * params.cellClipMult &&
@@ -237,9 +245,10 @@ const computeCells = () => {
     return { site: vc.site, points };
   });
 
-  // drop out cells (perlin noise)
+  // drop out!
+
   if (params.cellDropOutType === "perlin") {
-    noiseSeed(420);
+    // drop out cells (perlin noise)
 
     vCells = vCells.filter(
       (vc) =>
@@ -280,8 +289,8 @@ const computeCells = () => {
         strokeWeight: primStrokeWeight,
         extendStart: -3,
         extendEnd: -3,
-        bezierSwing: random([-2, 2]),
-        showArrows: true,
+        bezierSwing: primArrowBezierSwing,
+        showArrows: params.primMstShowArrows,
         arrowDistance: params.primMstArrowDist,
         arrowWidth: params.primMstArrowWidth,
         arrowHeight: params.primMstArrowHeight,
@@ -370,10 +379,14 @@ const drawCells = () => {
   if (params.showPrimMst) {
     push();
     primLines.forEach((p) => {
-      if (params.primMstArrowDist !== p.arrowDistance)
-        p.setArrowDistance(params.primMstArrowDist);
-      p.arrowWidth = params.primMstArrowWidth;
-      p.arrowHeight = params.primMstArrowHeight;
+      if (!params.primMstShowArrows) {
+        p.showArrows = false;
+      } else {
+        if (params.primMstArrowDist !== p.arrowDistance)
+          p.setArrowDistance(params.primMstArrowDist);
+        p.arrowWidth = params.primMstArrowWidth;
+        p.arrowHeight = params.primMstArrowHeight;
+      }
       p.draw();
     });
     pop();
@@ -396,7 +409,8 @@ const drawCells = () => {
 // keycodes can be looked up here: https://www.toptal.com/developers/keycode
 // ----------------------------------------------------------------------------
 
-let dragging = false;
+let draggingModifier = false;
+let startedDragOnCanvas = false;
 
 let startCanvasX = 0;
 let startCanvasY = 0;
@@ -406,14 +420,14 @@ let mousePressedY = 0;
 
 sketch.keyPressed = () => {
   if (keyCode === 32) {
-    dragging = true;
+    draggingModifier = true;
     cursor("grab");
     return false;
   }
 };
 
 sketch.keyReleased = () => {
-  dragging = false;
+  draggingModifier = false;
   cursor(ARROW);
 };
 
@@ -432,13 +446,15 @@ sketch.mouseMoved = () => {
 sketch.mousePressed = () => {
   // if we aren't dragging see if we clicked on a cell
 
-  if (!dragging) {
+  if (!draggingModifier) {
     if (mouseX >= 0 && mouseX < width && mouseY >= 0 && mouseY < height) {
       const x = (mouseX + xl) / params.scale - params.canvasX;
       const y = (mouseY + yt) / params.scale - params.canvasY;
 
       selectedVCellIndex = voronoiGetSite(vCells, x, y);
     }
+  } else if (mouseX < width && mouseY < height) {
+    startedDragOnCanvas = true;
   }
 
   // record where we clicked for later
@@ -449,8 +465,12 @@ sketch.mousePressed = () => {
   startCanvasY = params.canvasY;
 };
 
+sketch.mouseReleased = () => {
+  startedDragOnCanvas = false;
+};
+
 sketch.mouseDragged = () => {
-  if (dragging) {
+  if (draggingModifier && startedDragOnCanvas) {
     params.canvasX = startCanvasX + (mouseX - mousePressedX) / params.scale;
     params.canvasY = startCanvasY + (mouseY - mousePressedY) / params.scale;
   }

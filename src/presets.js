@@ -13,12 +13,17 @@ export const presets = [
 
     cellSize: 12,
     cellClipMult: 1,
-    cellTrimR: 165, // 40,
+    cellTrimR: 165,
 
     cellDropOutType: "perlin",
     cellDropOutPerc: 0.4,
     cellDropOutMult: 1.0,
     cellDropOutMod: 10,
+
+    primMstShowArrows: true,
+    primMstArrowDist: 9,
+    primMstArrowWidth: 2,
+    primMstArrowHeight: 2,
   },
   {
     // preset 2: 320 cells
@@ -38,6 +43,11 @@ export const presets = [
     cellDropOutPerc: 0,
     cellDropOutMult: 1,
     cellDropOutMod: 5,
+
+    primMstShowArrows: true,
+    primMstArrowDist: 9,
+    primMstArrowWidth: 2,
+    primMstArrowHeight: 2,
   },
   {
     // preset 3: 400 cells
@@ -57,6 +67,11 @@ export const presets = [
     cellDropOutPerc: 0.4,
     cellDropOutMult: 1.5,
     cellDropOutMod: 10,
+
+    primMstShowArrows: true,
+    primMstArrowDist: 9,
+    primMstArrowWidth: 2,
+    primMstArrowHeight: 2,
   },
   {
     // preset 4: 200
@@ -76,6 +91,11 @@ export const presets = [
     cellDropOutPerc: 0.4,
     cellDropOutMult: 1,
     cellDropOutMod: 10,
+
+    primMstShowArrows: true,
+    primMstArrowDist: 9,
+    primMstArrowWidth: 2,
+    primMstArrowHeight: 2,
   },
   {
     // preset 5: 209
@@ -95,6 +115,11 @@ export const presets = [
     cellDropOutPerc: 0.4,
     cellDropOutMult: 1,
     cellDropOutMod: 10,
+
+    primMstShowArrows: true,
+    primMstArrowDist: 9,
+    primMstArrowWidth: 2,
+    primMstArrowHeight: 2,
   },
   {
     // preset 6: 200 cells
@@ -114,6 +139,11 @@ export const presets = [
     cellDropOutPerc: 0.4,
     cellDropOutMult: 1,
     cellDropOutMod: 10,
+
+    primMstShowArrows: true,
+    primMstArrowDist: 22,
+    primMstArrowWidth: 3.5,
+    primMstArrowHeight: 3.5,
   },
   {
     // preset 7: 178 cells
@@ -133,5 +163,10 @@ export const presets = [
     cellDropOutPerc: 0.4,
     cellDropOutMult: 1,
     cellDropOutMod: 10,
+
+    primMstShowArrows: true,
+    primMstArrowDist: 42,
+    primMstArrowWidth: 5,
+    primMstArrowHeight: 5,
   },
 ];

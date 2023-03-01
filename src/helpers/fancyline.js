@@ -19,7 +19,7 @@ export default class FancyLine {
     extendStart = 0,
     extendEnd = 0,
 
-    // bezier curve swing (negative = left, positive = right)
+    // bezier curve swing (negative = left, positive = right; can be a function)
     bezierSwing = -2,
 
     // multiply our length by our bezierdivision and add to our start point;
@@ -174,42 +174,49 @@ export default class FancyLine {
     }
 
     // store our line distance for later
-
     const { x: sx, y: sy } = this.fsp;
     const { x: ex, y: ey } = this.fep;
 
     this.lined = dist(sx, sy, ex, ey);
 
-    // compute our bezier control points
-
-    if (this.type === "bezier") {
-      // get our midpoint
-      const unitx = (ex - sx) / this.lined;
-      const unity = (ey - sy) / this.lined;
-
-      const bdd = this.lined * this.bezierDivision;
-
-      const c1x = sx + unitx * bdd;
-      const c1y = sy + unity * bdd;
-
-      const c2x = ex - unitx * bdd;
-      const c2y = ey - unity * bdd;
-
-      // angle perpendicular to our line
-      const theta = Math.atan2(ey - sy, ex - sx);
-
-      this.bezierC1x = c1x + this.bezierSwing * -Math.sin(theta);
-      this.bezierC1y = c1y + this.bezierSwing * Math.cos(theta);
-      this.bezierC2x = c2x + this.bezierSwing * -Math.sin(theta);
-      this.bezierC2y = c2y + this.bezierSwing * Math.cos(theta);
-
-      // set our bezier distance
-      [this.bezierd, this.bezierLengths] = this.computeBezierDistances();
-    }
+    // compute our bezier control points and distances
+    if (this.type === "bezier") this.computeBezier(0);
 
     // compute our arrows
-
     this.computeArrows();
+  }
+
+  computeBezier(m) {
+    const { x: sx, y: sy } = this.fsp;
+    const { x: ex, y: ey } = this.fep;
+
+    // get our midpoint
+    const unitx = (ex - sx) / this.lined;
+    const unity = (ey - sy) / this.lined;
+
+    const bdd = this.lined * this.bezierDivision;
+
+    const c1x = sx + unitx * bdd;
+    const c1y = sy + unity * bdd;
+
+    const c2x = ex - unitx * bdd;
+    const c2y = ey - unity * bdd;
+
+    // angle perpendicular to our line
+    const theta = Math.atan2(ey - sy, ex - sx);
+
+    let bs =
+      typeof this.bezierSwing === "function"
+        ? this.bezierSwing(m, this.index)
+        : this.bezierSwing;
+
+    this.bezierC1x = c1x + bs * -Math.sin(theta);
+    this.bezierC1y = c1y + bs * Math.cos(theta);
+    this.bezierC2x = c2x + bs * -Math.sin(theta);
+    this.bezierC2y = c2y + bs * Math.cos(theta);
+
+    // set our bezier distances
+    [this.bezierd, this.bezierLengths] = this.computeBezierDistances();
   }
 
   computeLineArrows(m) {
@@ -475,6 +482,7 @@ export default class FancyLine {
       if (this.type === "line") {
         line(this.fsp.x, this.fsp.y, this.fep.x, this.fep.y);
       } else if (this.type === "bezier") {
+        if (typeof this.bezierSwing === "function") this.computeBezier(m);
         bezier(
           this.fsp.x,
           this.fsp.y,
@@ -493,8 +501,13 @@ export default class FancyLine {
       this.showArrows &&
       (this.arrowCount > 0 || this.arrowDistance !== undefined)
     ) {
-      // if arrowInterp is a function, compute our arrows first
-      if (typeof this.arrowInterp === "function") this.computeArrows(m);
+      // if type is bezier and bezierSwing is a function OR arrowInterp is a function,
+      // compute our arrows first
+      if (
+        (this.type === "bezier" && typeof this.bezierSwing === "function") ||
+        typeof this.arrowInterp === "function"
+      )
+        this.computeArrows(m);
 
       this.arrows.forEach((a) => {
         if (a) {

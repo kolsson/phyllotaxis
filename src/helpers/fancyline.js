@@ -218,7 +218,8 @@ export default class FancyLine {
     let { x: sx, y: sy } = this.fsp;
     let { x: ex, y: ey } = this.fep;
 
-    let d = this.lined;
+    const d = this.lined;
+    let actuald = d;
 
     // our units (for drawing the arrow)
 
@@ -237,6 +238,7 @@ export default class FancyLine {
       // take our arrow height into account when calculating our lerpx and lerpy
 
       st = this.arrowHeight / d;
+      actuald -= this.arrowHeight;
     }
 
     if (this.arrowDistance !== undefined) {
@@ -247,7 +249,10 @@ export default class FancyLine {
 
       // arrowCount required to cover line
       ac = Math.ceil(d / this.arrowDistance);
-      et = 1 + (ac * this.arrowDistance - d) / d;
+      const adj = ac * this.arrowDistance - d;
+      et = 1 + adj / d;
+
+      actuald += adj;
     }
 
     for (let i = 0; i < ac; i++) {
@@ -255,7 +260,7 @@ export default class FancyLine {
 
       let t =
         typeof this.arrowInterp === "function"
-          ? this.arrowInterp(m, this.index, d)
+          ? this.arrowInterp(m, this.index, actuald)
           : this.arrowInterp;
 
       // we divide line distance by count and
@@ -300,14 +305,13 @@ export default class FancyLine {
       };
 
       // compute our arrow stroke
-      // we map our t from st, et -> 0, et so if we've adjusted our
-      // start point (so the arrowhead doesn't appear off the line)
-      // we can still fade in correctly
+      // we map so if we've adjusted our start point (so the arrowhead doesn't
+      // appear off the line) we can still fade in correctly
 
       if (this.arrowStroke !== undefined) {
         a.stroke =
           typeof this.arrowStroke === "function"
-            ? this.arrowStroke(m, this.index, d, map(t, st, et, 0, et))
+            ? this.arrowStroke(m, this.index, actuald, map(t, st, 1, 0, 1))
             : this.arrowStroke;
       }
 
@@ -322,7 +326,8 @@ export default class FancyLine {
     let { x: sx, y: sy } = this.fsp;
     let { x: ex, y: ey } = this.fep;
 
-    let d = this.bezierd;
+    const d = this.bezierd;
+    let actuald = d;
 
     // our t values we want to map onto based on how we adjust our starting
     // and ending points on the curve
@@ -336,6 +341,7 @@ export default class FancyLine {
       // take our arrow height into account when calculating our lerpx and lerpy
 
       st = this.arrowHeight / d;
+      actuald -= this.arrowHeight;
     }
 
     if (this.arrowDistance !== undefined) {
@@ -346,7 +352,10 @@ export default class FancyLine {
 
       // arrowCount required to cover line
       ac = Math.ceil(d / this.arrowDistance);
-      et = 1 + (ac * this.arrowDistance - d) / d;
+      const adj = ac * this.arrowDistance - d;
+      et = 1 + adj / d;
+
+      actuald += adj;
     }
 
     for (let i = 0; i < ac; i++) {
@@ -354,7 +363,7 @@ export default class FancyLine {
 
       let t =
         typeof this.arrowInterp === "function"
-          ? this.arrowInterp(m, this.index, d)
+          ? this.arrowInterp(m, this.index, actuald)
           : this.arrowInterp;
 
       // we divide line distance by count and
@@ -364,11 +373,11 @@ export default class FancyLine {
       // make sure our t wraps around
       t = ((t * 1000) % 1000) / 1000;
 
-      // map our t onto st, et
-      t = map(t, 0, 1, st, et);
-
       // apply arc length parameterization
       t = this.alp(t);
+
+      // map our t onto st, et
+      t = map(t, 0, 1, st, et);
 
       // check if arrow is beyond the end of our bezier
       if (t > 1) {
@@ -408,14 +417,13 @@ export default class FancyLine {
       };
 
       // compute our arrow stroke
-      // we map our t from st, et -> 0, et so if we've adjusted our
-      // start point (so the arrowhead doesn't appear off the line)
-      // we can still fade in correctly
+      // we map so if we've adjusted our start point (so the arrowhead doesn't
+      // appear off the line) we can still fade in correctly
 
       if (this.arrowStroke !== undefined) {
         a.stroke =
           typeof this.arrowStroke === "function"
-            ? this.arrowStroke(m, this.index, d, map(t, st, et, 0, et))
+            ? this.arrowStroke(m, this.index, actuald, map(t, st, 1, 0, 1))
             : this.arrowStroke;
       }
 

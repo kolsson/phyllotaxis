@@ -145,6 +145,11 @@ export default function tp(
   });
 
   const primF = pane.addFolder({ title: "Prim MST" });
+  primF.addInput(params, "primMstBezierSwingMult", {
+    min: 0,
+    max: 20,
+    step: 0.25,
+  });
   primF.addInput(params, "primMstShowArrows");
   primF.addInput(params, "primMstArrowDist", {
     min: 5,

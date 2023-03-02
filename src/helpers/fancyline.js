@@ -217,6 +217,9 @@ export default class FancyLine {
 
     // set our bezier distances
     [this.bezierd, this.bezierLengths] = this.computeBezierDistances();
+
+    // clear our arrows
+    this.arrows.fill(undefined);
   }
 
   computeLineArrows(m) {

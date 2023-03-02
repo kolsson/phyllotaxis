@@ -8,7 +8,7 @@ import FancyLine from "./helpers/fancyline";
 import tweakpane from "./helpers/tweakpane";
 import { lineSegmentCircleIntersect } from "./helpers/intersect";
 import { furthestDistOfCells, voronoiGetSite } from "./helpers/voronoi";
-import * as E from "./helpers/easing";
+import chaikin from "./helpers/chaikin";
 import prim from "./helpers/prim";
 
 const sketch = window;
@@ -21,6 +21,8 @@ let xl, xr, yt, yb;
 let cellPoints, vCells;
 let selectedVCellIndex = -1;
 let overVCellIndex = -1;
+
+let cvCells;
 
 // voronoi
 const v = new Voronoi();
@@ -60,6 +62,7 @@ const params = {
   cellDropOutMult: 1,
   cellDropOutMod: 10,
 
+  primMstBezierSwingMult: 2,
   primMstShowArrows: true,
   primMstArrowDist: 9,
   primMstArrowWidth: 2,
@@ -145,7 +148,8 @@ const primArrowStroke = (m, i, d, t) => {
 const primArrowInterp = (m, i, d) => (m + i * 1000) / (100 * d);
 
 // pick a random -2 or 2 (same as random([-2, 2]))
-const primArrowBezierSwing = (m, i) => 2 * Math.sign(1 - 2 * noise(i));
+const primArrowBezierSwing = (m, i) =>
+  params.primMstBezierSwingMult * Math.sign(1 - 2 * noise(i));
 
 // const primArrowBezierSwing = (m, i) =>
 //   noise(i) * 30 * Math.sin((m + i * 1000) / 100 + 200 * noise(i));
@@ -318,6 +322,12 @@ const computeCells = () => {
   //   })
   // );
 
+  // convert vCells to chaikin curves
+  cvCells = vCells.map((vc) => ({
+    points: chaikin(vc.points, 0.2, 5, true),
+    site: vc.site,
+  }));
+
   // update our monitor
   params.actualCellCount = vCells.length;
 };
@@ -345,7 +355,7 @@ const drawCells = () => {
   //   text(i, p.x, p.y - textMiddle);
   // });
 
-  vCells.forEach((vc, i) => {
+  cvCells.forEach((vc, i) => {
     push();
     stroke(255);
     strokeWeight(2 / params.scale);

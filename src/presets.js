@@ -20,6 +20,7 @@ export const presets = [
     cellDropOutMult: 1.0,
     cellDropOutMod: 10,
 
+    primMstBezierSwingMult: 2,
     primMstShowArrows: true,
     primMstArrowDist: 9,
     primMstArrowWidth: 2,
@@ -44,6 +45,7 @@ export const presets = [
     cellDropOutMult: 1,
     cellDropOutMod: 5,
 
+    primMstBezierSwingMult: 2,
     primMstShowArrows: true,
     primMstArrowDist: 9,
     primMstArrowWidth: 2,
@@ -68,6 +70,7 @@ export const presets = [
     cellDropOutMult: 1.5,
     cellDropOutMod: 10,
 
+    primMstBezierSwingMult: 3,
     primMstShowArrows: true,
     primMstArrowDist: 9,
     primMstArrowWidth: 2,
@@ -75,7 +78,7 @@ export const presets = [
   },
   {
     // preset 4: 200
-    scale: 1.4,
+    scale: 1.3,
 
     cellCount: 300,
     startCell: 3,
@@ -92,6 +95,7 @@ export const presets = [
     cellDropOutMult: 1,
     cellDropOutMod: 10,
 
+    primMstBezierSwingMult: 3.5,
     primMstShowArrows: true,
     primMstArrowDist: 9,
     primMstArrowWidth: 2,
@@ -116,6 +120,7 @@ export const presets = [
     cellDropOutMult: 1,
     cellDropOutMod: 10,
 
+    primMstBezierSwingMult: 2.5,
     primMstShowArrows: true,
     primMstArrowDist: 9,
     primMstArrowWidth: 2,
@@ -140,6 +145,7 @@ export const presets = [
     cellDropOutMult: 1,
     cellDropOutMod: 10,
 
+    primMstBezierSwingMult: 5,
     primMstShowArrows: true,
     primMstArrowDist: 22,
     primMstArrowWidth: 3.5,
@@ -164,6 +170,7 @@ export const presets = [
     cellDropOutMult: 1,
     cellDropOutMod: 10,
 
+    primMstBezierSwingMult: 7.5,
     primMstShowArrows: true,
     primMstArrowDist: 42,
     primMstArrowWidth: 5,

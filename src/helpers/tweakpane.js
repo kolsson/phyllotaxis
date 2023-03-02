@@ -9,6 +9,7 @@ const computeKeys = {
   cellAngle: true,
   cellAngleFrac: true,
   cellSize: true,
+  cellSiteCircleRMult: true,
   cellClipMult: true,
   cellTrimR: true,
   cellDropOutType: true,
@@ -107,6 +108,11 @@ export default function tp(
     min: 6,
     max: 40,
     step: 1,
+  });
+  cellsF.addInput(params, "cellSiteCircleRMult", {
+    min: 0,
+    max: 1,
+    step: 0.05,
   });
 
   const clipF = pane.addFolder({ title: "Clipping" });

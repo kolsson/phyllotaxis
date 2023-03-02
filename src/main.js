@@ -22,8 +22,6 @@ let cellPoints, vCells;
 let selectedVCellIndex = -1;
 let overVCellIndex = -1;
 
-let cvCells;
-
 // voronoi
 const v = new Voronoi();
 let vd;
@@ -56,8 +54,9 @@ const params = {
   cellClipMult: 1,
   cellTrimR: 0,
 
-  cellDropOutType: "perlin", // 'perlin' or 'mod'
+  cellSiteCircleRMult: 0.5,
 
+  cellDropOutType: "perlin", // 'perlin' or 'mod'
   cellDropOutPerc: 0.4,
   cellDropOutMult: 1,
   cellDropOutMod: 10,
@@ -281,6 +280,9 @@ const computeCells = () => {
   primMst = prim(graph, vclen);
 
   // create our prim lines
+
+  const extend = -(params.cellSize * params.cellSiteCircleRMult) / 2;
+
   primLines = primMst.map(
     (e, index) =>
       new FancyLine({
@@ -291,8 +293,8 @@ const computeCells = () => {
         // index: e[0], // set our index to our site
         stroke: [92, 92, 92],
         strokeWeight: primStrokeWeight,
-        extendStart: -3,
-        extendEnd: -3,
+        extendStart: extend,
+        extendEnd: extend,
         bezierSwing: primArrowBezierSwing,
         showArrows: params.primMstShowArrows,
         arrowDistance: params.primMstArrowDist,
@@ -322,11 +324,13 @@ const computeCells = () => {
   //   })
   // );
 
-  // convert vCells to chaikin curves
-  cvCells = vCells.map((vc) => ({
-    points: chaikin(vc.points, 0.2, 5, true),
-    site: vc.site,
-  }));
+  // compute chaikin curves
+  vCells = vCells.map((vc) => {
+    vc.vpoints = vc.points;
+    vc.points = chaikin(vc.vpoints, 0.2, 4, true);
+
+    return vc;
+  });
 
   // update our monitor
   params.actualCellCount = vCells.length;
@@ -355,14 +359,14 @@ const drawCells = () => {
   //   text(i, p.x, p.y - textMiddle);
   // });
 
-  cvCells.forEach((vc, i) => {
+  vCells.forEach((vc, i) => {
     push();
-    stroke(255);
-    strokeWeight(2 / params.scale);
+    stroke(92);
+    strokeWeight(1 / params.scale);
 
-    fill(i === selectedVCellIndex || i === overVCellIndex ? 156 : 192);
+    fill(i === selectedVCellIndex || i === overVCellIndex ? 220 : 255);
 
-    // voronoi boundary
+    // voronoi boundary -> chaikin
     if (params.showCells) {
       beginShape();
       vc.points.forEach((p) => vertex(p.x, p.y));
@@ -374,7 +378,7 @@ const drawCells = () => {
     const { x, y } = vc.site;
 
     if (params.showCellSites) {
-      circle(x, y, 6); // we could use params.cellSize but we want to connect with our arrow lines
+      circle(x, y, params.cellSize * params.cellSiteCircleRMult);
     }
 
     if (params.showCellText) {

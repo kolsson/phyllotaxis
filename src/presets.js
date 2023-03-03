@@ -10,8 +10,9 @@ export const presets = [
 
     cellAngle: 137,
     cellAngleFrac: 0.5,
-
     cellSize: 12,
+    cellSiteCircleRMult: 0.5,
+
     cellClipMult: 1,
     cellTrimR: 165,
 
@@ -35,8 +36,9 @@ export const presets = [
 
     cellAngle: 137,
     cellAngleFrac: 0.5,
-
     cellSize: 12,
+    cellSiteCircleRMult: 0.5,
+
     cellClipMult: 1,
     cellTrimR: 40,
 
@@ -60,10 +62,11 @@ export const presets = [
 
     cellAngle: 137,
     cellAngleFrac: 0.5,
-
     cellSize: 12,
+    cellSiteCircleRMult: 0.5,
+
     cellClipMult: 4,
-    cellTrimR: 85, // 16,
+    cellTrimR: 85,
 
     cellDropOutType: "perlin",
     cellDropOutPerc: 0.4,
@@ -85,10 +88,11 @@ export const presets = [
 
     cellAngle: 105,
     cellAngleFrac: 0.5,
-
     cellSize: 15,
+    cellSiteCircleRMult: 0.5,
+
     cellClipMult: 1,
-    cellTrimR: 100, // 40,
+    cellTrimR: 100,
 
     cellDropOutType: "perlin",
     cellDropOutPerc: 0.4,
@@ -110,10 +114,11 @@ export const presets = [
 
     cellAngle: 105,
     cellAngleFrac: 0.5,
-
     cellSize: 12,
+    cellSiteCircleRMult: 0.5,
+
     cellClipMult: 1,
-    cellTrimR: 99, // 40,
+    cellTrimR: 99,
 
     cellDropOutType: "perlin",
     cellDropOutPerc: 0.4,
@@ -135,8 +140,9 @@ export const presets = [
 
     cellAngle: 137,
     cellAngleFrac: 0.5,
+    cellSize: 20,
+    cellSiteCircleRMult: 1,
 
-    cellSize: 24,
     cellClipMult: 1.1,
     cellTrimR: 0,
 
@@ -160,8 +166,9 @@ export const presets = [
 
     cellAngle: 137,
     cellAngleFrac: 0.5,
-
     cellSize: 40,
+    cellSiteCircleRMult: 0.9,
+
     cellClipMult: 1.8,
     cellTrimR: 0,
 
@@ -172,7 +179,7 @@ export const presets = [
 
     primMstBezierSwingMult: 7.5,
     primMstShowArrows: true,
-    primMstArrowDist: 42,
+    primMstArrowDist: 28,
     primMstArrowWidth: 5,
     primMstArrowHeight: 5,
   },

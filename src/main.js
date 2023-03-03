@@ -10,6 +10,7 @@ import { lineSegmentCircleIntersect } from "./helpers/intersect";
 import { furthestDistOfCells, voronoiGetSite } from "./helpers/voronoi";
 import chaikin from "./helpers/chaikin";
 import prim from "./helpers/prim";
+import { irrCircle } from "./helpers/irregular";
 
 const sketch = window;
 window.p5 = p5;
@@ -305,6 +306,28 @@ const computeCells = () => {
       })
   );
 
+  // compute chaikin curves
+  vCells = vCells.map((vc) => {
+    vc.vpoints = vc.points;
+    vc.points = chaikin(vc.vpoints, 0.2, 4, true);
+
+    return vc;
+  });
+
+  // update our monitor
+  params.actualCellCount = vCells.length;
+
+  // EXPERIMENTING
+  computeExperimenting();
+};
+
+// ----------------------------------------------------------------------------
+// EXPERIMENTING
+// ----------------------------------------------------------------------------
+
+let testCircle = [];
+
+function computeExperimenting() {
   // a test fancyline
   // primLines.push(
   //   new FancyLine({
@@ -323,18 +346,22 @@ const computeCells = () => {
   //     arrowInterp: primArrowInterp,
   //   })
   // );
+  // testCircle = irrCircle(-100, -100, 20);
+}
 
-  // compute chaikin curves
-  vCells = vCells.map((vc) => {
-    vc.vpoints = vc.points;
-    vc.points = chaikin(vc.vpoints, 0.2, 4, true);
-
-    return vc;
-  });
-
-  // update our monitor
-  params.actualCellCount = vCells.length;
-};
+function drawExperimenting() {
+  // push();
+  // // noiseDetail(2, 0.5);
+  // stroke(255, 0, 0);
+  // beginShape();
+  // testCircle.forEach((p) => {
+  //   curveVertex(p.x, p.y);
+  // });
+  // endShape(CLOSE);
+  // stroke(0, 0, 255, 128);
+  // circle(-100, -100, 40);
+  // pop();
+}
 
 // ----------------------------------------------------------------------------
 // draw cells
@@ -416,6 +443,9 @@ const drawCells = () => {
     circle(0, 0, cbr * 2);
     pop();
   }
+
+  // EXPERIMENTING
+  drawExperimenting();
 };
 
 // ----------------------------------------------------------------------------

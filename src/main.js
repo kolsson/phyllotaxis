@@ -135,7 +135,7 @@ sketch.draw = () => {
 // fancyline callbacks
 // ----------------------------------------------------------------------------
 
-const primStrokeWeight = () => 1.5 / params.scale;
+const primStrokeWeight = () => 1 / params.scale;
 
 const arrowColor = [92, 92, 92];
 const primArrowStroke = (m, i, d, t) => {
@@ -371,20 +371,12 @@ const drawCells = () => {
   // begin
   translate(width / 2, height / 2);
   scale(params.scale);
-  strokeWeight(1.5 / params.scale);
   translate(params.canvasX, params.canvasY);
 
   // text (for debugging)
   const ts = params.textSize / params.scale;
   textSize(ts);
   const textMiddle = ts / 2 - textAscent() * 0.8; // magic number, font specific
-
-  // all cell sites (including those removed from the voronoi diagram)
-  // cellPoints.forEach((p, i) => {
-  //   point(p.x, p.y);
-  //   ellipse(p.x, p.y, cellSize, cellSize);
-  //   text(i, p.x, p.y - textMiddle);
-  // });
 
   vCells.forEach((vc, i) => {
     push();
@@ -405,7 +397,10 @@ const drawCells = () => {
     const { x, y } = vc.site;
 
     if (params.showCellSites) {
+      push();
+      strokeWeight(1 / params.scale);
       circle(x, y, params.cellSize * params.cellSiteCircleRMult);
+      pop();
     }
 
     if (params.showCellText) {

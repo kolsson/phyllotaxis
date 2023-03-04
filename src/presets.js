@@ -1,9 +1,11 @@
 // fun cellAngles: 43.5, 137.5
 
+import { ToneConstantSource } from "tone/build/esm/signal/ToneConstantSource";
+
 export const presets = [
   {
     // preset 1: 168 cells
-    scale: 1.7,
+    scale: 1.5,
 
     cellCount: 300,
     startCell: 19,
@@ -11,6 +13,9 @@ export const presets = [
     cellAngle: 137,
     cellAngleFrac: 0.5,
     cellSize: 12,
+    cellPadding: 0.3,
+    cellCenterPush: 0,
+
     cellSiteCircleRMult: 0.5,
 
     cellClipMult: 1,
@@ -20,12 +25,14 @@ export const presets = [
     cellDropOutPerc: 0.4,
     cellDropOutMult: 1.0,
     cellDropOutMod: 10,
+    cellReorderAfterDropOut: false,
 
     primMstBezierSwingMult: 2,
     primMstShowArrows: true,
     primMstArrowDist: 9,
     primMstArrowWidth: 2,
     primMstArrowHeight: 2,
+    primMstArrowSpeed: 1,
   },
   {
     // preset 2: 320 cells
@@ -37,6 +44,9 @@ export const presets = [
     cellAngle: 137,
     cellAngleFrac: 0.5,
     cellSize: 12,
+    cellPadding: 0,
+    cellCenterPush: 0,
+
     cellSiteCircleRMult: 0.5,
 
     cellClipMult: 1,
@@ -46,12 +56,14 @@ export const presets = [
     cellDropOutPerc: 0,
     cellDropOutMult: 1,
     cellDropOutMod: 5,
+    cellReorderAfterDropOut: true,
 
     primMstBezierSwingMult: 2,
     primMstShowArrows: true,
     primMstArrowDist: 9,
     primMstArrowWidth: 2,
     primMstArrowHeight: 2,
+    primMstArrowSpeed: 1,
   },
   {
     // preset 3: 400 cells
@@ -63,6 +75,9 @@ export const presets = [
     cellAngle: 137,
     cellAngleFrac: 0.5,
     cellSize: 12,
+    cellPadding: 0,
+    cellCenterPush: 0,
+
     cellSiteCircleRMult: 0.5,
 
     cellClipMult: 4,
@@ -72,12 +87,14 @@ export const presets = [
     cellDropOutPerc: 0.4,
     cellDropOutMult: 1.5,
     cellDropOutMod: 10,
+    cellReorderAfterDropOut: false,
 
     primMstBezierSwingMult: 3,
     primMstShowArrows: true,
     primMstArrowDist: 9,
     primMstArrowWidth: 2,
     primMstArrowHeight: 2,
+    primMstArrowSpeed: 1,
   },
   {
     // preset 4: 200
@@ -89,6 +106,9 @@ export const presets = [
     cellAngle: 105,
     cellAngleFrac: 0.5,
     cellSize: 15,
+    cellPadding: 0,
+    cellCenterPush: 0,
+
     cellSiteCircleRMult: 0.5,
 
     cellClipMult: 1,
@@ -98,12 +118,14 @@ export const presets = [
     cellDropOutPerc: 0.4,
     cellDropOutMult: 1,
     cellDropOutMod: 10,
+    cellReorderAfterDropOut: false,
 
     primMstBezierSwingMult: 3.5,
     primMstShowArrows: true,
     primMstArrowDist: 9,
     primMstArrowWidth: 2,
     primMstArrowHeight: 2,
+    primMstArrowSpeed: 1,
   },
   {
     // preset 5: 209
@@ -115,6 +137,9 @@ export const presets = [
     cellAngle: 105,
     cellAngleFrac: 0.5,
     cellSize: 12,
+    cellPadding: 0,
+    cellCenterPush: 0,
+
     cellSiteCircleRMult: 0.5,
 
     cellClipMult: 1,
@@ -124,16 +149,18 @@ export const presets = [
     cellDropOutPerc: 0.4,
     cellDropOutMult: 1,
     cellDropOutMod: 10,
+    cellReorderAfterDropOut: false,
 
     primMstBezierSwingMult: 2.5,
     primMstShowArrows: true,
     primMstArrowDist: 9,
     primMstArrowWidth: 2,
     primMstArrowHeight: 2,
+    primMstArrowSpeed: 1,
   },
   {
-    // preset 6: 200 cells
-    scale: 0.9,
+    // preset 6: 236 cells
+    scale: 0.8,
 
     cellCount: 401,
     startCell: 1,
@@ -141,6 +168,9 @@ export const presets = [
     cellAngle: 137,
     cellAngleFrac: 0.5,
     cellSize: 20,
+    cellPadding: 0.07,
+    cellCenterPush: 40,
+
     cellSiteCircleRMult: 1,
 
     cellClipMult: 1.1,
@@ -150,12 +180,14 @@ export const presets = [
     cellDropOutPerc: 0.4,
     cellDropOutMult: 1,
     cellDropOutMod: 10,
+    cellReorderAfterDropOut: false,
 
     primMstBezierSwingMult: 5,
     primMstShowArrows: true,
     primMstArrowDist: 22,
     primMstArrowWidth: 3.5,
     primMstArrowHeight: 3.5,
+    primMstArrowSpeed: 1.5,
   },
   {
     // preset 7: 178 cells
@@ -167,6 +199,9 @@ export const presets = [
     cellAngle: 137,
     cellAngleFrac: 0.5,
     cellSize: 40,
+    cellPadding: 0,
+    cellCenterPush: 0,
+
     cellSiteCircleRMult: 0.9,
 
     cellClipMult: 1.8,
@@ -176,11 +211,13 @@ export const presets = [
     cellDropOutPerc: 0.4,
     cellDropOutMult: 1,
     cellDropOutMod: 10,
+    cellReorderAfterDropOut: false,
 
     primMstBezierSwingMult: 7.5,
     primMstShowArrows: true,
     primMstArrowDist: 28,
     primMstArrowWidth: 5,
     primMstArrowHeight: 5,
+    primMstArrowSpeed: 2,
   },
 ];

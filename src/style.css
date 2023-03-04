@@ -13,6 +13,6 @@ body {
 
 /* tweakpane label width */
 .tp-dfwv {
-  min-width: 340px;
+  min-width: 320px;
   z-index: 1000;
 }

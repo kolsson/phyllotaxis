@@ -1,4 +1,4 @@
-// From here: https://sighack.com/post/chaikin-curves
+// reference: https://sighack.com/post/chaikin-curves
 
 function chaikinCut(a, b, ratio) {
   /*

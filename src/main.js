@@ -7,10 +7,13 @@ import FancyLine from "./helpers/fancyline";
 
 import tweakpane from "./helpers/tweakpane";
 import { lineSegmentCircleIntersect } from "./helpers/intersect";
+import { calcCentroid } from "./helpers/polygons";
 import { furthestDistOfCells, voronoiGetSite } from "./helpers/voronoi";
 import chaikin from "./helpers/chaikin";
 import prim from "./helpers/prim";
-import { irrCircle } from "./helpers/irregular";
+
+// experimenting
+import { computeExperimenting, drawExperimenting } from "./experiments";
 
 const sketch = window;
 window.p5 = p5;
@@ -19,15 +22,15 @@ window.p5 = p5;
 let xl, xr, yt, yb;
 
 // cells
-let cellPoints, vCells;
-let selectedVCellIndex = -1;
-let overVCellIndex = -1;
+let cells;
+let selectedCellIndex = -1;
+let overCellIndex = -1;
 
 // voronoi
 const v = new Voronoi();
 let vd;
 
-// prim's
+// prim
 let primMst;
 let primLines = [];
 
@@ -50,23 +53,27 @@ const params = {
 
   cellAngle: 137,
   cellAngleFrac: 0.5,
-
   cellSize: 24,
-  cellClipMult: 1,
-  cellTrimR: 0,
+  cellPadding: 0,
+  cellCenterPush: 0,
 
   cellSiteCircleRMult: 0.5,
+
+  cellClipMult: 1,
+  cellTrimR: 0,
 
   cellDropOutType: "perlin", // 'perlin' or 'mod'
   cellDropOutPerc: 0.4,
   cellDropOutMult: 1,
   cellDropOutMod: 10,
+  cellReorderAfterDropOut: true,
 
   primMstBezierSwingMult: 2,
   primMstShowArrows: true,
   primMstArrowDist: 9,
   primMstArrowWidth: 2,
   primMstArrowHeight: 2,
+  primMstArrowSpeed: 1,
 
   // debugging
   showCellTrimCircles: false,
@@ -84,7 +91,7 @@ const params = {
 const _compute = () => computeCells();
 const _redraw = () => redraw();
 const _didLoadPreset = () => {
-  selectedVCellIndex = -1;
+  selectedCellIndex = -1;
   computeCells();
   redraw();
 };
@@ -112,7 +119,7 @@ sketch.setup = () => {
   stroke(92);
   strokeCap(SQUARE);
   noFill();
-  angleMode(DEGREES);
+
   frameRate(30);
 
   // build our tweakpane
@@ -137,7 +144,6 @@ sketch.draw = () => {
 
 const primStrokeWeight = () => 1 / params.scale;
 
-const arrowColor = [92, 92, 92];
 const primArrowStroke = (m, i, d, t) => {
   // adjust 8 multiplier to speed up or slow down fade in / out
   const a = Math.min(1, (((t > 0.5 ? 1 - t : t) * d) / 15) * 8);
@@ -145,7 +151,8 @@ const primArrowStroke = (m, i, d, t) => {
 };
 
 // use i to stagger things a bit
-const primArrowInterp = (m, i, d) => (m + i * 1000) / (100 * d);
+const primArrowInterp = (m, i, d) =>
+  (m * params.primMstArrowSpeed + i * 1000) / (100 * d);
 
 // pick a random -2 or 2 (same as random([-2, 2]))
 const primArrowBezierSwing = (m, i) =>
@@ -153,6 +160,38 @@ const primArrowBezierSwing = (m, i) =>
 
 // const primArrowBezierSwing = (m, i) =>
 //   noise(i) * 30 * Math.sin((m + i * 1000) / 100 + 200 * noise(i));
+
+// ----------------------------------------------------------------------------
+// reorder cells based on distance from center
+// ----------------------------------------------------------------------------
+
+const reorderCells = () => {
+  cells = [...cells].sort((a, b) =>
+    dist(0, 0, a.site.x, a.site.y) < dist(0, 0, b.site.x, b.site.y) ? -1 : 1
+  );
+};
+
+// ----------------------------------------------------------------------------
+// space points
+// ----------------------------------------------------------------------------
+
+const spacePoint = (p, unit, centroid) => {
+  const out = {};
+
+  out.x = p.x * (params.cellPadding + 1) + unit.x * params.cellCenterPush;
+  out.y = p.y * (params.cellPadding + 1) + unit.y * params.cellCenterPush;
+
+  out.x -= centroid.x;
+  out.y -= centroid.y;
+
+  out.x /= params.cellPadding + 1;
+  out.y /= params.cellPadding + 1;
+
+  out.x += centroid.x;
+  out.y += centroid.y;
+
+  return out;
+};
 
 // ----------------------------------------------------------------------------
 // compute cells
@@ -164,21 +203,20 @@ const computeCells = () => {
   // reset our random seed
   noiseSeed(420);
 
-  cellPoints = [];
+  const p = [];
+  const thetam = (params.cellAngle + params.cellAngleFrac) * (Math.PI / 180);
 
   for (let i = params.startCell; i < params.cellCount; i++) {
-    const a = i * (params.cellAngle + params.cellAngleFrac);
+    const theta = i * thetam;
     const r = params.cellSize * sqrt(i);
-    const x = r * cos(a);
-    const y = r * sin(a);
-
-    cellPoints.push({ x, y });
+    const x = r * cos(theta);
+    const y = r * sin(theta);
+    p.push({ x, y });
   }
 
   // compute voronoi diagram
-
   if (vd?.length > 0) v.recycle(vd); // if we have an existing diagram, recycle
-  vd = v.compute(cellPoints, {
+  vd = v.compute(p, {
     xl: xl * params.cellClipMult,
     xr: xr * params.cellClipMult,
     yt: yt * params.cellClipMult,
@@ -186,18 +224,25 @@ const computeCells = () => {
   });
 
   // get voronoi cells
+  cells = [];
 
-  vCells = [];
   for (let i = 0; i < vd.cells.length; i++) {
+    const site = { ...vd.cells[i].site };
+
     const points = [];
     for (let j = 0; j < vd.cells[i].halfedges.length; j++) {
       points.push({ ...vd.cells[i].halfedges[j].getStartpoint() });
     }
-    vCells.push({ site: { ...vd.cells[i].site }, points });
+
+    // calculate our angle relative to (0, 0)
+    const theta = Math.atan(site.y / site.x);
+
+    cells.push({ site, theta, points });
   }
+
   // rectangle approach: remove cells that touch our diagram edges
-  // vCells = vCells.filter((vc) =>
-  //   vc.points.every(
+  // cells = cells.filter((c) =>
+  //   c.points.every(
   //     (p) =>
   //       p.x > xl * params.cellClipMult &&
   //       p.x < xr * params.cellClipMult &&
@@ -207,28 +252,28 @@ const computeCells = () => {
   // );
 
   // circle approach: remove cells outside a circle with diameter = width
-  vCells = vCells.filter(
-    (vc) =>
-      dist(0, 0, vc.site.x, vc.site.y) < (width / 2) * params.cellClipMult &&
-      vc.points.every(
+  cells = cells.filter(
+    (c) =>
+      dist(0, 0, c.site.x, c.site.y) < (width / 2) * params.cellClipMult &&
+      c.points.every(
         (p) => dist(0, 0, p.x, p.y) < (width / 2) * params.cellClipMult
       )
   );
 
   // find a circle A that encompasses the remaining cells
-  car = furthestDistOfCells(vCells, 0, 0);
+  car = furthestDistOfCells(cells, 0, 0);
 
   // shrink the circle to create circle B
   cbr = car - params.cellTrimR;
 
   // clip cells using circle B
-  vCells = vCells.map((vc) => {
-    const plen = vc.points.length;
+  cells = cells.map((c) => {
+    const plen = c.points.length;
     const points = [];
 
     // iterate through each point pair
-    vc.points.forEach((ep, i) => {
-      const sp = i === 0 ? vc.points[plen - 1] : vc.points[i - 1];
+    c.points.forEach((ep, i) => {
+      const sp = i === 0 ? c.points[plen - 1] : c.points[i - 1];
 
       if (dist(0, 0, ep.x, ep.y) < cbr) {
         // we are in the bounding circle
@@ -241,55 +286,93 @@ const computeCells = () => {
 
         points.push(lineSegmentCircleIntersect(sp, ep, cbr));
 
-        const np = i === plen - 1 ? vc.points[0] : vc.points[i + 1];
+        const np = i === plen - 1 ? c.points[0] : c.points[i + 1];
         points.push(lineSegmentCircleIntersect(np, ep, cbr));
       }
     });
 
-    return { site: vc.site, points };
+    return { ...c, points };
   });
 
-  // drop out!
+  // reorder cells?
+  if (!params.cellReorderAfterDropOut) reorderCells();
 
+  // drop out!
   if (params.cellDropOutType === "perlin") {
     // drop out cells (perlin noise)
+    // doesn't matter if we reorder before or after
 
-    vCells = vCells.filter(
-      (vc) =>
+    cells = cells.filter(
+      (c) =>
         noise(
-          vc.site.x * params.cellDropOutMult,
-          vc.site.y * params.cellDropOutMult
+          c.site.x * params.cellDropOutMult,
+          c.site.y * params.cellDropOutMult
         ) > params.cellDropOutPerc
     );
   } else if (params.cellDropOutType === "mod") {
     // drop out cells (mod)
-    vCells = vCells.filter((vc, i) => i % params.cellDropOutMod !== 0);
+    cells = cells.filter((c, i) => i % params.cellDropOutMod !== 0);
   }
+
+  // reorder cells?
+  if (params.cellReorderAfterDropOut) reorderCells();
 
   // build our graph and run prim's algorithm
   const graph = [];
-  const vclen = vCells.length;
+  const clen = cells.length;
 
-  for (let i = 0; i < vclen - 1; i++) {
-    const { x: sx, y: sy } = vCells[i].site;
-    for (let j = i + 1; j < vclen; j++) {
-      const { x: ex, y: ey } = vCells[j].site;
+  for (let i = 0; i < clen - 1; i++) {
+    const { x: sx, y: sy } = cells[i].site;
+    for (let j = i + 1; j < clen; j++) {
+      const { x: ex, y: ey } = cells[j].site;
       graph.push([i, j, dist(sx, sy, ex, ey)]);
     }
   }
 
-  primMst = prim(graph, vclen);
+  primMst = prim(graph, clen);
+
+  // compute chaikin curves
+  cells = cells.map((c) => {
+    c.vpoints = c.points; // save our voronoi points for later?
+    c.points = chaikin(c.vpoints, 0.2, 4, true);
+
+    return c;
+  });
+
+  // space our cells and add our centroid
+  cells.forEach((c) => {
+    const centroid = calcCentroid(c.points);
+
+    const d = dist(0, 0, centroid.x, centroid.y);
+    const unit = { x: centroid.x / d, y: centroid.y / d };
+
+    // site
+    const { x, y } = spacePoint(c.site, unit, centroid);
+
+    c.site.x = x;
+    c.site.y = y;
+
+    // points
+    c.points.forEach((p) => {
+      const { x, y } = spacePoint(p, unit, centroid);
+
+      p.x = x;
+      p.y = y;
+    });
+
+    // store our new centroid
+    c.centroid = calcCentroid(c.points);
+  });
 
   // create our prim lines
-
   const extend = -(params.cellSize * params.cellSiteCircleRMult) / 2;
 
   primLines = primMst.map(
     (e, index) =>
       new FancyLine({
         type: "bezier",
-        sp: vCells[e[0]].site,
-        ep: vCells[e[1]].site,
+        sp: cells[e[0]].site, // cells[e[0]].centroid,
+        ep: cells[e[1]].site, // cells[e[1]].centroid,
         index, // each line has a unique index
         // index: e[0], // set our index to our site
         stroke: [92, 92, 92],
@@ -306,62 +389,12 @@ const computeCells = () => {
       })
   );
 
-  // compute chaikin curves
-  vCells = vCells.map((vc) => {
-    vc.vpoints = vc.points;
-    vc.points = chaikin(vc.vpoints, 0.2, 4, true);
-
-    return vc;
-  });
-
   // update our monitor
-  params.actualCellCount = vCells.length;
+  params.actualCellCount = cells.length;
 
   // EXPERIMENTING
   computeExperimenting();
 };
-
-// ----------------------------------------------------------------------------
-// EXPERIMENTING
-// ----------------------------------------------------------------------------
-
-let testCircle = [];
-
-function computeExperimenting() {
-  // a test fancyline
-  // primLines.push(
-  //   new FancyLine({
-  //     type: "bezier",
-  //     sp: { x: -200, y: -200 },
-  //     ep: { x: 200, y: -200 },
-  //     index: -1,
-  //     stroke: [92, 92, 92],
-  //     strokeWeight: primStrokeWeight,
-  //     bezierSwing: 200,
-  //     showArrows: true,
-  //     arrowDistance: params.primMstArrowDist,
-  //     arrowWidth: params.primMstArrowWidth,
-  //     arrowHeight: params.primMstArrowHeight,
-  //     arrowStroke: primArrowStroke,
-  //     arrowInterp: primArrowInterp,
-  //   })
-  // );
-  // testCircle = irrCircle(-100, -100, 20);
-}
-
-function drawExperimenting() {
-  // push();
-  // // noiseDetail(2, 0.5);
-  // stroke(255, 0, 0);
-  // beginShape();
-  // testCircle.forEach((p) => {
-  //   curveVertex(p.x, p.y);
-  // });
-  // endShape(CLOSE);
-  // stroke(0, 0, 255, 128);
-  // circle(-100, -100, 40);
-  // pop();
-}
 
 // ----------------------------------------------------------------------------
 // draw cells
@@ -373,29 +406,30 @@ const drawCells = () => {
   scale(params.scale);
   translate(params.canvasX, params.canvasY);
 
-  // text (for debugging)
+  // text prep
   const ts = params.textSize / params.scale;
   textSize(ts);
   const textMiddle = ts / 2 - textAscent() * 0.8; // magic number, font specific
 
-  vCells.forEach((vc, i) => {
-    push();
-    stroke(92);
-    strokeWeight(1 / params.scale);
+  cells.forEach((c, i) => {
+    // cell boundaries
 
-    fill(i === selectedVCellIndex || i === overVCellIndex ? 220 : 255);
-
-    // voronoi boundary -> chaikin
     if (params.showCells) {
+      push();
+      stroke(92);
+      strokeWeight(1 / params.scale);
+      fill(i === selectedCellIndex || i === overCellIndex ? 220 : 255);
+
       beginShape();
-      vc.points.forEach((p) => vertex(p.x, p.y));
+      c.points.forEach((p) => vertex(p.x, p.y));
       endShape(CLOSE);
+      pop();
     }
-    pop();
 
-    // site
-    const { x, y } = vc.site;
+    // cell site
+    const { x, y } = c.site;
 
+    // cell site: circle
     if (params.showCellSites) {
       push();
       strokeWeight(1 / params.scale);
@@ -403,6 +437,7 @@ const drawCells = () => {
       pop();
     }
 
+    // cell cite: text
     if (params.showCellText) {
       push();
       strokeWeight(1 / params.scale);
@@ -475,10 +510,10 @@ sketch.mouseMoved = () => {
   const x = (mouseX + xl) / params.scale - params.canvasX;
   const y = (mouseY + yt) / params.scale - params.canvasY;
 
-  const i = voronoiGetSite(vCells, x, y);
+  const i = voronoiGetSite(cells, x, y);
 
-  if (i !== overVCellIndex) {
-    overVCellIndex = voronoiGetSite(vCells, x, y);
+  if (i !== overCellIndex) {
+    overCellIndex = voronoiGetSite(cells, x, y);
   }
 };
 
@@ -490,7 +525,7 @@ sketch.mousePressed = () => {
       const x = (mouseX + xl) / params.scale - params.canvasX;
       const y = (mouseY + yt) / params.scale - params.canvasY;
 
-      selectedVCellIndex = voronoiGetSite(vCells, x, y);
+      selectedCellIndex = voronoiGetSite(cells, x, y);
     }
   } else if (mouseX < width && mouseY < height) {
     startedDragOnCanvas = true;

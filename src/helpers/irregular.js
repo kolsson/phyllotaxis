@@ -34,3 +34,28 @@ export function irrCircle(
 
   return out;
 }
+
+export function irrLine(sx, sy, ex, ey, n = 10, nMin = -10, nMax = 10) {
+  // add our start and end points twice
+  const out = [{ x: sx, y: sy }];
+
+  const d = dist(sx, sy, ex, ey);
+  const unitx = (ex - sx) / d;
+  const unity = (ey - sy) / d;
+  const theta = Math.atan2(ey - sy, ex - sx);
+
+  for (let i = 0; i <= n; i++) {
+    let x = sx + (unitx * (i * d)) / n;
+    let y = sy + (unity * (i * d)) / n;
+
+    const wiggle = map(noise(x, y), 0, 1, nMin, nMax);
+    x = x + wiggle * -Math.sin(theta);
+    y = y + wiggle * Math.cos(theta);
+
+    out.push({ x, y });
+  }
+
+  out.push({ x: ex, y: ey });
+
+  return out;
+}

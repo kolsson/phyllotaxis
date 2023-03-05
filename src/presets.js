@@ -176,7 +176,7 @@ export const presets = [
     cellClipMult: 1.1,
     cellTrimR: 0,
 
-    cellDropOutType: "perlin",
+    cellDropOutType: "none",
     cellDropOutPerc: 0.4,
     cellDropOutMult: 1,
     cellDropOutMod: 10,

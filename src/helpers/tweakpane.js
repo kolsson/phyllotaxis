@@ -157,8 +157,10 @@ export default function tp(
   dropOutF.addInput(params, "cellDropOutType", {
     label: "dropOutType",
     options: {
+      none: "none",
       perlin: "perlin",
       mod: "mod",
+      exponential: "exponential",
     },
   });
   dropOutF.addInput(params, "cellDropOutPerc", {

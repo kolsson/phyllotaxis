@@ -187,7 +187,7 @@ export const presets = [
 
     cellSiteCircleRMult: 1,
 
-    cellClipMult: 1.1,
+    cellClipMult: 1.0,
     cellTrimR: 0,
 
     cellDropOutType: "mod",

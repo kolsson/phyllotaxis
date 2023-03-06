@@ -2,6 +2,7 @@ import "./style.css";
 import p5 from "p5";
 import * as Tone from "tone";
 import * as Voronoi from "voronoi/rhill-voronoi-core";
+import hull from "hull.js";
 
 import FancyLine from "./helpers/fancyline";
 
@@ -317,6 +318,9 @@ const computeCells = () => {
     return c;
   });
 
+  // remove balloon knots by making convex hulls
+  cells.forEach((c) => (c.points = hull(c.points, Infinity, [".x", ".y"])));
+
   // space our cells
   cells.forEach((c, i) => {
     const centroid = calcCentroid(c.points);
@@ -460,6 +464,7 @@ const drawCells = () => {
   }
 
   // debug clip circles
+  // circles do not reflect spacing out of cells
   if (params.showCellTrimCircles) {
     push();
     stroke(0, 0, 255);

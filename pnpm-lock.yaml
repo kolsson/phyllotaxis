@@ -1,6 +1,7 @@
 lockfileVersion: 5.4
 
 specifiers:
+  hull.js: ^1.0.3
   p5: ^1.5.0
   tone: ^14.7.77
   tweakpane: ^3.1.4
@@ -8,6 +9,7 @@ specifiers:
   voronoi: ^1.0.0
 
 dependencies:
+  hull.js: 1.0.3
   p5: 1.5.0
   tone: 14.7.77
   tweakpane: 3.1.4
@@ -279,6 +281,10 @@ packages:
     dependencies:
       function-bind: 1.1.1
     dev: true
+
+  /hull.js/1.0.3:
+    resolution: {integrity: sha512-CM6zaH0+3mdmjmvJnpxfmJ6K7juoF0GnmjE1g+m5JRj+ynP23VwSoUtIuVUePF9icr1J1/1zybhscCltyftAaw==}
+    dev: false
 
   /is-core-module/2.11.0:
     resolution: {integrity: sha512-RRjxlvLDkD1YJwDbroBHMb+cukurkDWNyHx7D3oNB5x9rb5ogcksMC5wHCadcXoo67gVr/+3GFySh3134zi6rw==}

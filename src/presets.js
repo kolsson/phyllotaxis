@@ -1,11 +1,7 @@
-// fun cellAngles: 43.5, 137.5
-
-import { ToneConstantSource } from "tone/build/esm/signal/ToneConstantSource";
-
 export const presets = [
   {
     // preset 1: 168 cells
-    scale: 1.5,
+    scale: 1.35,
 
     cellCount: 300,
     startCell: 19,
@@ -13,8 +9,11 @@ export const presets = [
     cellAngle: 137,
     cellAngleFrac: 0.5,
     cellSize: 12,
-    cellPadding: 0.3,
-    cellCenterPush: 0,
+    cellPaddingType: "exponential",
+    cellPaddingAmount: 0.3,
+    cellPaddingCurvePower: 1.65,
+    cellPaddingCurveMult: 1,
+    cellPaddingCenterPush: 7.5,
 
     cellSiteCircleRMult: 0.5,
 
@@ -44,8 +43,11 @@ export const presets = [
     cellAngle: 137,
     cellAngleFrac: 0.5,
     cellSize: 12,
-    cellPadding: 0,
-    cellCenterPush: 0,
+    cellPaddingType: "linear",
+    cellPaddingAmount: 0,
+    cellPaddingCurvePower: 1,
+    cellPaddingCurveMult: 1,
+    cellPaddingCenterPush: 0,
 
     cellSiteCircleRMult: 0.5,
 
@@ -75,8 +77,11 @@ export const presets = [
     cellAngle: 137,
     cellAngleFrac: 0.5,
     cellSize: 12,
-    cellPadding: 0,
-    cellCenterPush: 0,
+    cellPaddingType: "linear",
+    cellPaddingAmount: 0,
+    cellPaddingCurvePower: 1,
+    cellPaddingCurveMult: 1,
+    cellPaddingCenterPush: 0,
 
     cellSiteCircleRMult: 0.5,
 
@@ -106,8 +111,11 @@ export const presets = [
     cellAngle: 105,
     cellAngleFrac: 0.5,
     cellSize: 15,
-    cellPadding: 0,
-    cellCenterPush: 0,
+    cellPaddingType: "linear",
+    cellPaddingAmount: 0,
+    cellPaddingCurvePower: 1,
+    cellPaddingCurveMult: 1,
+    cellPaddingCenterPush: 0,
 
     cellSiteCircleRMult: 0.5,
 
@@ -137,8 +145,11 @@ export const presets = [
     cellAngle: 105,
     cellAngleFrac: 0.5,
     cellSize: 12,
-    cellPadding: 0,
-    cellCenterPush: 0,
+    cellPaddingType: "linear",
+    cellPaddingAmount: 0,
+    cellPaddingCurvePower: 1,
+    cellPaddingCurveMult: 1,
+    cellPaddingCenterPush: 0,
 
     cellSiteCircleRMult: 0.5,
 
@@ -159,24 +170,27 @@ export const presets = [
     primMstArrowSpeed: 1,
   },
   {
-    // preset 6: 236 cells
-    scale: 0.8,
+    // preset 6: 314 cells
+    scale: 0.55,
 
     cellCount: 401,
-    startCell: 1,
+    startCell: 3,
 
     cellAngle: 137,
     cellAngleFrac: 0.5,
     cellSize: 20,
-    cellPadding: 0.07,
-    cellCenterPush: 40,
+    cellPaddingType: "exponential",
+    cellPaddingAmount: 0.72,
+    cellPaddingCurvePower: 0.95,
+    cellPaddingCurveMult: 1.05,
+    cellPaddingCenterPush: 0,
 
     cellSiteCircleRMult: 1,
 
     cellClipMult: 1.1,
     cellTrimR: 0,
 
-    cellDropOutType: "none",
+    cellDropOutType: "mod",
     cellDropOutPerc: 0.4,
     cellDropOutMult: 1,
     cellDropOutMod: 10,
@@ -191,7 +205,7 @@ export const presets = [
   },
   {
     // preset 7: 178 cells
-    scale: 0.6,
+    scale: 0.55,
 
     cellCount: 300,
     startCell: 1,
@@ -199,8 +213,11 @@ export const presets = [
     cellAngle: 137,
     cellAngleFrac: 0.5,
     cellSize: 40,
-    cellPadding: 0,
-    cellCenterPush: 0,
+    cellPaddingType: "linear",
+    cellPaddingAmount: 0,
+    cellPaddingCurvePower: 1,
+    cellPaddingCurveMult: 1,
+    cellPaddingCenterPush: 0,
 
     cellSiteCircleRMult: 0.9,
 

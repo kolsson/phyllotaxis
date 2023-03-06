@@ -9,8 +9,11 @@ const computeKeys = {
   cellAngle: true,
   cellAngleFrac: true,
   cellSize: true,
-  cellPadding: true,
-  cellCenterPush: true,
+  cellPaddingType: true,
+  cellPaddingAmount: true,
+  cellPaddingCurvePower: true,
+  cellPaddingCurveMult: true,
+  cellPaddingCenterPush: true,
   cellSiteCircleRMult: true,
   cellClipMult: true,
   cellTrimR: true,
@@ -76,8 +79,8 @@ export default function tp(
 
   pane.addInput(params, "scale", {
     min: 0.1,
-    max: 6,
-    step: 0.1,
+    max: 4,
+    step: 0.05,
   });
 
   pane.addSeparator();
@@ -117,17 +120,38 @@ export default function tp(
     max: 40,
     step: 1,
   });
-  cellsF.addInput(params, "cellPadding", {
-    label: "padding",
+
+  const cellPaddingF = pane.addFolder({ title: "Cell Padding" });
+  cellPaddingF.addInput(params, "cellPaddingType", {
+    label: "type",
+    options: {
+      linear: "linear",
+      exponential: "exponential",
+    },
+  });
+  cellPaddingF.addInput(params, "cellPaddingAmount", {
+    label: "amount",
     min: 0,
     max: 2,
     step: 0.01,
   });
-  cellsF.addInput(params, "cellCenterPush", {
+  cellPaddingF.addInput(params, "cellPaddingCurvePower", {
+    label: "curvePower",
+    min: 0.05,
+    max: 5,
+    step: 0.05,
+  });
+  cellPaddingF.addInput(params, "cellPaddingCurveMult", {
+    label: "curveMult",
+    min: 0.05,
+    max: 5,
+    step: 0.05,
+  });
+  cellPaddingF.addInput(params, "cellPaddingCenterPush", {
     label: "centerPush",
     min: 0,
-    max: 50,
-    step: 0.1,
+    max: 100,
+    step: 0.5,
   });
 
   const sitesF = pane.addFolder({ title: "Sites", expanded: false });
@@ -185,7 +209,7 @@ export default function tp(
     label: "reorderAfterDropOut",
   });
 
-  const primF = pane.addFolder({ title: "Prim MST" });
+  const primF = pane.addFolder({ title: "Prim MST", expanded: false });
   primF.addInput(params, "primMstBezierSwingMult", {
     label: "bezierSwingMult",
     min: 0,

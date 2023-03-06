@@ -54,15 +54,18 @@ const params = {
   cellAngle: 137,
   cellAngleFrac: 0.5,
   cellSize: 24,
-  cellPadding: 0,
-  cellCenterPush: 0,
+  cellPaddingType: "linear", // linear, exponential
+  cellPaddingAmount: 0,
+  cellPaddingCurvePower: 1,
+  cellPaddingCurveMult: 1,
+  cellPaddingCenterPush: 0,
 
   cellSiteCircleRMult: 0.5,
 
   cellClipMult: 1,
   cellTrimR: 0,
 
-  cellDropOutType: "perlin", // 'perlin' or 'mod'
+  cellDropOutType: "perlin", // none, perlin, mod, exponential
   cellDropOutPerc: 0.4,
   cellDropOutMult: 1,
   cellDropOutMod: 10,
@@ -172,28 +175,6 @@ const reorderCells = () => {
 };
 
 // ----------------------------------------------------------------------------
-// space points
-// ----------------------------------------------------------------------------
-
-const spacePoint = (p, unit, centroid) => {
-  const out = {};
-
-  out.x = p.x * (params.cellPadding + 1) + unit.x * params.cellCenterPush;
-  out.y = p.y * (params.cellPadding + 1) + unit.y * params.cellCenterPush;
-
-  out.x -= centroid.x;
-  out.y -= centroid.y;
-
-  out.x /= params.cellPadding + 1;
-  out.y /= params.cellPadding + 1;
-
-  out.x += centroid.x;
-  out.y += centroid.y;
-
-  return out;
-};
-
-// ----------------------------------------------------------------------------
 // compute cells
 // ----------------------------------------------------------------------------
 
@@ -234,10 +215,7 @@ const computeCells = () => {
       points.push({ ...vd.cells[i].halfedges[j].getStartpoint() });
     }
 
-    // calculate our angle relative to (0, 0)
-    const theta = Math.atan(site.y / site.x);
-
-    cells.push({ site, theta, points });
+    cells.push({ site, points });
   }
 
   // rectangle approach: remove cells that touch our diagram edges
@@ -339,29 +317,45 @@ const computeCells = () => {
     return c;
   });
 
-  // space our cells and add our centroid
-  cells.forEach((c) => {
+  // space our cells
+  cells.forEach((c, i) => {
     const centroid = calcCentroid(c.points);
-
     const d = dist(0, 0, centroid.x, centroid.y);
     const unit = { x: centroid.x / d, y: centroid.y / d };
+    const theta = Math.atan2(centroid.y, centroid.x);
+
+    let cp;
+    if (params.cellPaddingType === "linear") {
+      // linear
+      cp = params.cellPaddingAmount + 1;
+    } else if (params.cellPaddingType === "exponential") {
+      // exponential
+      cp = Math.max(
+        1,
+        map(
+          d,
+          0,
+          400, // width / 2,
+          1,
+          Math.pow(params.cellPaddingAmount + 1, params.cellPaddingCurvePower)
+        ) * params.cellPaddingCurveMult
+      );
+    }
+
+    const newCentroid = {
+      x: d * cp * Math.cos(theta) + params.cellPaddingCenterPush * unit.x,
+      y: d * cp * Math.sin(theta) + params.cellPaddingCenterPush * unit.y,
+    };
 
     // site
-    const { x, y } = spacePoint(c.site, unit, centroid);
-
-    c.site.x = x;
-    c.site.y = y;
+    c.site.x = c.site.x - centroid.x + newCentroid.x;
+    c.site.y = c.site.y - centroid.y + newCentroid.y;
 
     // points
     c.points.forEach((p) => {
-      const { x, y } = spacePoint(p, unit, centroid);
-
-      p.x = x;
-      p.y = y;
+      p.x = p.x - centroid.x + newCentroid.x;
+      p.y = p.y - centroid.y + newCentroid.y;
     });
-
-    // store our new centroid
-    c.centroid = calcCentroid(c.points);
   });
 
   // create our prim lines
@@ -453,6 +447,8 @@ const drawCells = () => {
       if (!params.primMstShowArrows) {
         p.showArrows = false;
       } else {
+        p.showArrows = true;
+
         if (params.primMstArrowDist !== p.arrowDistance)
           p.setArrowDistance(params.primMstArrowDist);
         p.arrowWidth = params.primMstArrowWidth;

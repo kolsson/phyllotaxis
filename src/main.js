@@ -67,9 +67,10 @@ const params = {
   cellClipMult: 1,
   cellTrimR: 0,
 
-  cellDropOutType: "perlin", // none, perlin, mod, exponential
-  cellDropOutPerc: 0.4,
-  cellDropOutMult: 1,
+  cellDropOutType: "none", // none, perlin, distance, mod
+  cellDropOutPercMin: 0.4,
+  cellDropOutPercMax: 0.4,
+  cellDropOutNoisePosMult: 1,
   cellDropOutMod: 10,
   cellReorderAfterDropOut: true,
 
@@ -197,9 +198,7 @@ const primArrowBezierDistSwing = (m, i, lined) => {
 // ----------------------------------------------------------------------------
 
 const reorderCells = () => {
-  cells = [...cells].sort((a, b) =>
-    dist(0, 0, a.site.x, a.site.y) < dist(0, 0, b.site.x, b.site.y) ? -1 : 1
-  );
+  cells = [...cells].sort((a, b) => (a.site.d < b.site.d ? -1 : 1));
 };
 
 // ----------------------------------------------------------------------------
@@ -301,6 +300,14 @@ const computeCells = () => {
     return { ...c, points };
   });
 
+  // store cell distances and find our cell furthest from the center
+  const furthestCell = cells.reduce((acc, c, i) => {
+    c.site.d = dist(0, 0, c.site.x, c.site.y);
+
+    if (i === 0) return c;
+    return acc.site.d > acc, c.site.d ? acc : c;
+  }, 0);
+
   // reorder cells?
   if (!params.cellReorderAfterDropOut) reorderCells();
 
@@ -312,13 +319,30 @@ const computeCells = () => {
     cells = cells.filter(
       (c) =>
         noise(
-          c.site.x * params.cellDropOutMult,
-          c.site.y * params.cellDropOutMult
-        ) > params.cellDropOutPerc
+          c.site.x * params.cellDropOutNoisePosMult,
+          c.site.y * params.cellDropOutNoisePosMult
+        ) > random(params.cellDropOutPercMin, params.cellDropOutPercMax)
     );
   } else if (params.cellDropOutType === "mod") {
     // drop out cells (mod)
     cells = cells.filter((c, i) => i % params.cellDropOutMod !== 0);
+  } else if (params.cellDropOutType === "distance") {
+    // drop out cells (distance adjusted perlin noise)
+    cells = cells.filter((c) => {
+      const t = c.site.d / furthestCell.site.d;
+      const perc = lerp(
+        params.cellDropOutPercMin,
+        params.cellDropOutPercMax,
+        t
+      );
+
+      return (
+        noise(
+          c.site.x * params.cellDropOutNoisePosMult,
+          c.site.y * params.cellDropOutNoisePosMult
+        ) > perc
+      );
+    });
   }
 
   // reorder cells?
@@ -367,7 +391,7 @@ const computeCells = () => {
         map(
           d,
           0,
-          400, // width / 2,
+          furthestCell.site.d,
           1,
           Math.pow(params.cellPaddingAmount + 1, params.cellPaddingCurvePower)
         ) * params.cellPaddingCurveMult
@@ -382,6 +406,9 @@ const computeCells = () => {
     // site
     c.site.x = c.site.x - centroid.x + newCentroid.x;
     c.site.y = c.site.y - centroid.y + newCentroid.y;
+
+    // update dist
+    c.site.d = dist(0, 0, c.site.x, c.site.y);
 
     // points
     c.points.forEach((p) => {

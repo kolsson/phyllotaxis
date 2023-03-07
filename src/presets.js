@@ -10,7 +10,7 @@ export const presets = [
     cellAngleFrac: 0.5,
     cellSize: 12,
     cellPaddingType: "exponential",
-    cellPaddingAmount: 0.3,
+    cellPaddingAmount: 0.15,
     cellPaddingCurvePower: 1.65,
     cellPaddingCurveMult: 1,
     cellPaddingCenterPush: 7.5,
@@ -21,8 +21,9 @@ export const presets = [
     cellTrimR: 165,
 
     cellDropOutType: "perlin",
-    cellDropOutPerc: 0.4,
-    cellDropOutMult: 1.0,
+    cellDropOutPercMin: 0.4,
+    cellDropOutPercMax: 0.4,
+    cellDropOutNoisePosMult: 1.0,
     cellDropOutMod: 10,
     cellReorderAfterDropOut: false,
 
@@ -58,8 +59,9 @@ export const presets = [
     cellTrimR: 40,
 
     cellDropOutType: "mod",
-    cellDropOutPerc: 0,
-    cellDropOutMult: 1,
+    cellDropOutPercMin: 0.4,
+    cellDropOutPercMax: 0.4,
+    cellDropOutNoisePosMult: 1,
     cellDropOutMod: 5,
     cellReorderAfterDropOut: true,
 
@@ -95,8 +97,9 @@ export const presets = [
     cellTrimR: 85,
 
     cellDropOutType: "perlin",
-    cellDropOutPerc: 0.4,
-    cellDropOutMult: 1.5,
+    cellDropOutPercMin: 0.4,
+    cellDropOutPercMax: 0.4,
+    cellDropOutNoisePosMult: 1.5,
     cellDropOutMod: 10,
     cellReorderAfterDropOut: false,
 
@@ -132,8 +135,9 @@ export const presets = [
     cellTrimR: 100,
 
     cellDropOutType: "perlin",
-    cellDropOutPerc: 0.4,
-    cellDropOutMult: 1,
+    cellDropOutPercMin: 0.4,
+    cellDropOutPercMax: 0.4,
+    cellDropOutNoisePosMult: 1,
     cellDropOutMod: 10,
     cellReorderAfterDropOut: false,
 
@@ -169,8 +173,9 @@ export const presets = [
     cellTrimR: 99,
 
     cellDropOutType: "perlin",
-    cellDropOutPerc: 0.4,
-    cellDropOutMult: 1,
+    cellDropOutPercMin: 0.4,
+    cellDropOutPercMax: 0.4,
+    cellDropOutNoisePosMult: 1,
     cellDropOutMod: 10,
     cellReorderAfterDropOut: false,
 
@@ -185,7 +190,7 @@ export const presets = [
     primMstArrowSpeed: 1,
   },
   {
-    // preset 6: 314 cells
+    // preset 6: 250 cells
     scale: 0.55,
 
     cellCount: 401,
@@ -195,7 +200,7 @@ export const presets = [
     cellAngleFrac: 0.5,
     cellSize: 20,
     cellPaddingType: "exponential",
-    cellPaddingAmount: 0.72,
+    cellPaddingAmount: 0.8,
     cellPaddingCurvePower: 0.95,
     cellPaddingCurveMult: 1.05,
     cellPaddingCenterPush: 0,
@@ -205,15 +210,16 @@ export const presets = [
     cellClipMult: 1.0,
     cellTrimR: 0,
 
-    cellDropOutType: "mod",
-    cellDropOutPerc: 0.4,
-    cellDropOutMult: 1,
+    cellDropOutType: "distance",
+    cellDropOutPercMin: 0.25,
+    cellDropOutPercMax: 0.425,
+    cellDropOutNoisePosMult: 1,
     cellDropOutMod: 10,
     cellReorderAfterDropOut: false,
 
-    primMstIsBezierDistSwing: false,
+    primMstIsBezierDistSwing: true,
     primMstBezierSwingStart: 5,
-    primMstBezierSwingEnd: 5,
+    primMstBezierSwingEnd: 20,
     primMstBezierSwingSensitivity: 1,
     primMstShowArrows: true,
     primMstArrowDist: 22,
@@ -243,8 +249,9 @@ export const presets = [
     cellTrimR: 0,
 
     cellDropOutType: "perlin",
-    cellDropOutPerc: 0.4,
-    cellDropOutMult: 1,
+    cellDropOutPercMin: 0.4,
+    cellDropOutPercMax: 0.4,
+    cellDropOutNoisePosMult: 1,
     cellDropOutMod: 10,
     cellReorderAfterDropOut: false,
 

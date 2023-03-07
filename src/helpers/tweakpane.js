@@ -18,8 +18,9 @@ const computeKeys = {
   cellClipMult: true,
   cellTrimR: true,
   cellDropOutType: true,
-  cellDropOutPerc: true,
-  cellDropOutMult: true,
+  cellDropOutPercMin: true,
+  cellDropOutPercMax: true,
+  cellDropOutNoisePosMult: true,
   cellDropOutMod: true,
   cellReorderAfterDropOut: true,
   primMstIsBezierDistSwing: true,
@@ -187,25 +188,31 @@ export default function tp(
     step: 1,
   });
 
-  const dropOutF = pane.addFolder({ title: "Drop Out" });
+  const dropOutF = pane.addFolder({ title: "Drop Out", expanded: false });
 
   dropOutF.addInput(params, "cellDropOutType", {
     label: "dropOutType",
     options: {
       none: "none",
       perlin: "perlin",
+      distance: "distance",
       mod: "mod",
-      exponential: "exponential",
     },
   });
-  dropOutF.addInput(params, "cellDropOutPerc", {
-    label: "dropOutPerc",
+  dropOutF.addInput(params, "cellDropOutPercMin", {
+    label: "dropOutPercMin",
     min: 0,
     max: 0.75,
-    step: 0.05,
+    step: 0.025,
   });
-  dropOutF.addInput(params, "cellDropOutMult", {
-    label: "dropOutMult",
+  dropOutF.addInput(params, "cellDropOutPercMax", {
+    label: "dropOutPercMax",
+    min: 0,
+    max: 0.75,
+    step: 0.025,
+  });
+  dropOutF.addInput(params, "cellDropOutNoisePosMult", {
+    label: "dropOutNoisePosMult",
     min: 0.05,
     max: 5,
     step: 0.05,
@@ -285,7 +292,7 @@ export default function tp(
     {
       label: "Highlight Prim MST",
       min: -1,
-      max: 400,
+      max: 400, // will be set when actualCellCountMonitor updates
       step: 1,
     }
   );

@@ -22,7 +22,7 @@ export default class FancyLine {
     // bezier curve swing (negative = left, positive = right; can be a function)
     bezierSwing = -2,
 
-    // multiply our length by our bezierdivision and add to our start point;
+    // multiply our length by our bezierDivision and add to our start point;
     // subtract from our end point to get our control point positions on our line
     bezierDivision = 0.33,
 
@@ -207,7 +207,7 @@ export default class FancyLine {
 
     let bs =
       typeof this.bezierSwing === "function"
-        ? this.bezierSwing(m, this.index)
+        ? this.bezierSwing(m, this.index, this.lined)
         : this.bezierSwing;
 
     this.bezierC1x = c1x + bs * -Math.sin(theta);
@@ -456,7 +456,7 @@ export default class FancyLine {
   // public draw method
   // ----------------------------------------------------------------------------
 
-  draw() {
+  draw(highlighted) {
     // store our millis() for later
     const m = millis();
 

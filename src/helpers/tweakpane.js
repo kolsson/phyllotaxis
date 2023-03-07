@@ -22,6 +22,7 @@ const computeKeys = {
   cellDropOutMult: true,
   cellDropOutMod: true,
   cellReorderAfterDropOut: true,
+  primMstIsBezierDistSwing: true,
 };
 
 export default function tp(
@@ -55,7 +56,7 @@ export default function tp(
 
   const exportButton = pane.addButton({
     title: "copy + console.log()",
-    label: "",
+    label: "current",
   });
 
   exportButton.on("click", async () => {
@@ -86,10 +87,17 @@ export default function tp(
   pane.addSeparator();
 
   // monitors
-  pane.addMonitor(params, "actualCellCount", {});
+  const actualCellCountMonitor = pane.addMonitor(params, "actualCellCount", {});
+
+  // currently just actualCellCount - 1
+  // const actualPrimLinesCountMonitor = pane.addMonitor(
+  //   params,
+  //   "actualPrimLinesCount",
+  //   {}
+  // );
 
   // core params
-  const cellsF = pane.addFolder({ title: "Cells" });
+  const cellsF = pane.addFolder({ title: "Cells", expanded: false });
   cellsF.addInput(params, "cellCount", {
     label: "count",
     min: 50,
@@ -121,7 +129,10 @@ export default function tp(
     step: 1,
   });
 
-  const cellPaddingF = pane.addFolder({ title: "Cell Padding" });
+  const cellPaddingF = pane.addFolder({
+    title: "Cell Padding",
+    expanded: false,
+  });
   cellPaddingF.addInput(params, "cellPaddingType", {
     label: "type",
     options: {
@@ -210,12 +221,28 @@ export default function tp(
   });
 
   const primF = pane.addFolder({ title: "Prim MST", expanded: false });
-  primF.addInput(params, "primMstBezierSwingMult", {
-    label: "bezierSwingMult",
+  primF.addInput(params, "primMstIsBezierDistSwing", {
+    label: "isBezierDistSwing",
+  });
+  primF.addInput(params, "primMstBezierSwingStart", {
+    label: "bezierSwingStart",
     min: 0,
-    max: 20,
+    max: 40,
     step: 0.25,
   });
+  primF.addInput(params, "primMstBezierSwingEnd", {
+    label: "bezierSwingEnd",
+    min: 0,
+    max: 40,
+    step: 0.25,
+  });
+  primF.addInput(params, "primMstBezierSwingSensitivity", {
+    label: "bezierSwingSensitivity",
+    min: 0,
+    max: 2,
+    step: 0.01,
+  });
+
   primF.addInput(params, "primMstShowArrows", {
     label: "showArrows",
   });
@@ -244,7 +271,7 @@ export default function tp(
     step: 0.05,
   });
 
-  const debugF = pane.addFolder({ title: "Debug", expanded: false });
+  const debugF = pane.addFolder({ title: "Debug", expanded: true });
   debugF.addInput(params, "showCellTrimCircles", {
     label: "Show Trim Circles",
   });
@@ -252,6 +279,16 @@ export default function tp(
   debugF.addInput(params, "showCells", { label: "Show Cells" });
   debugF.addInput(params, "showCellSites", { label: "Show Cell Sites" });
   debugF.addInput(params, "showPrimMst", { label: "Show Prim MST" });
+  const highlightPrimMstIndexInput = debugF.addInput(
+    params,
+    "highlightPrimMstIndex",
+    {
+      label: "Highlight Prim MST",
+      min: -1,
+      max: 400,
+      step: 1,
+    }
+  );
   debugF.addSeparator();
   debugF.addInput(params, "showCellText", { label: "Show Cell Text" });
   debugF.addInput(params, "textSize", {
@@ -266,6 +303,30 @@ export default function tp(
     if (!areUpdatesPaused) {
       if (computeKeys[e.presetKey]) computeCallback();
       redrawCallback();
+    }
+  });
+
+  // montor updates
+
+  let highlightPrimMstIndexInputMax = 0;
+
+  actualCellCountMonitor.on("update", (e) => {
+    // unsafe: https://github.com/cocopon/tweakpane/issues/360
+    const max = e.value - 1;
+
+    if (highlightPrimMstIndexInputMax !== max) {
+      const stc = highlightPrimMstIndexInput.controller_.valueController;
+      const sc = stc.sliderController;
+      sc.props.set("maxValue", max);
+
+      // Tweakpane limits the input range, but not the value itself
+      // it has to be updated manually
+      if (params.highlightPrimMstIndex > max) {
+        params.highlightPrimMstIndex = max;
+        pane.refresh();
+      }
+
+      highlightPrimMstIndexInputMax = max;
     }
   });
 

@@ -42,6 +42,7 @@ let primLines = [];
 const params = {
   // monitors
   actualCellCount: 300,
+  actualPrimLinesCount: 300,
 
   // ui
   scale: 1,
@@ -72,7 +73,10 @@ const params = {
   cellDropOutMod: 10,
   cellReorderAfterDropOut: true,
 
-  primMstBezierSwingMult: 2,
+  primMstIsBezierDistSwing: true,
+  primMstBezierSwingStart: 2,
+  primMstBezierSwingEnd: 2,
+  primMstBezierSwingSensitivity: 1,
   primMstShowArrows: true,
   primMstArrowDist: 9,
   primMstArrowWidth: 2,
@@ -83,6 +87,7 @@ const params = {
   showCellTrimCircles: false,
   showCells: true,
   showPrimMst: true,
+  highlightPrimMstIndex: -1,
   showCellSites: false,
   showCellText: false,
   textSize: 10,
@@ -146,7 +151,8 @@ sketch.draw = () => {
 // fancyline callbacks
 // ----------------------------------------------------------------------------
 
-const primStrokeWeight = () => 1 / params.scale;
+const primStrokeWeight = (m, i) =>
+  (i === params.highlightPrimMstIndex ? 2 : 1) / params.scale;
 
 const primArrowStroke = (m, i, d, t) => {
   // adjust 8 multiplier to speed up or slow down fade in / out
@@ -158,10 +164,31 @@ const primArrowStroke = (m, i, d, t) => {
 const primArrowInterp = (m, i, d) =>
   (m * params.primMstArrowSpeed + i * 1000) / (100 * d);
 
-// pick a random -2 or 2 (same as random([-2, 2]))
+// randomly pick a positive or negative sign
 const primArrowBezierSwing = (m, i) =>
-  params.primMstBezierSwingMult * Math.sign(1 - 2 * noise(i));
+  params.primMstBezierSwingStart * Math.sign(1 - 2 * noise(i));
 
+let longestPrimArrowLength = Number.MIN_SAFE_INTEGER;
+let shortestPrimArrowLength = Number.MAX_SAFE_INTEGER;
+
+const primArrowBezierDistSwing = (m, i, lined) => {
+  // lined is our straight point-to-point distance,
+  // not our curve distance (we don't know our curve yet
+  // because we are defining the swing here)
+
+  let t =
+    (lined - shortestPrimArrowLength) /
+    (longestPrimArrowLength - shortestPrimArrowLength);
+  t = constrain(t * params.primMstBezierSwingSensitivity, 0, 1);
+
+  const swing =
+    lerp(params.primMstBezierSwingStart, params.primMstBezierSwingEnd, t) *
+    Math.sign(1 - 2 * noise(i));
+
+  return swing;
+};
+
+// animated swing
 // const primArrowBezierSwing = (m, i) =>
 //   noise(i) * 30 * Math.sin((m + i * 1000) / 100 + 200 * noise(i));
 
@@ -261,7 +288,8 @@ const computeCells = () => {
       } else {
         // we intersect, generate two points -- this is very naive and assumes
         // each cell has only 2 points of intersection with the circle
-        // just used to clean up strays!
+        // may result in weird balloon knots! (cleaned up by making convex hulls
+        // later )
 
         points.push(lineSegmentCircleIntersect(sp, ep, cbr));
 
@@ -377,7 +405,9 @@ const computeCells = () => {
         strokeWeight: primStrokeWeight,
         extendStart: extend,
         extendEnd: extend,
-        bezierSwing: primArrowBezierSwing,
+        bezierSwing: params.primMstIsBezierDistSwing
+          ? primArrowBezierDistSwing
+          : primArrowBezierSwing,
         showArrows: params.primMstShowArrows,
         arrowDistance: params.primMstArrowDist,
         arrowWidth: params.primMstArrowWidth,
@@ -387,8 +417,9 @@ const computeCells = () => {
       })
   );
 
-  // update our monitor
+  // update our monitors
   params.actualCellCount = cells.length;
+  params.actualPrimLinesCount = primLines.length;
 
   // EXPERIMENTING
   computeExperimenting();
@@ -447,17 +478,30 @@ const drawCells = () => {
   // prim tree
   if (params.showPrimMst) {
     push();
-    primLines.forEach((p) => {
-      if (!params.primMstShowArrows) {
-        p.showArrows = false;
-      } else {
-        p.showArrows = true;
 
+    // get our longest and shortest lines (straight point-to-point distance)
+
+    longestPrimArrowLength = primLines.reduce(
+      (acc, p) => Math.max(acc, p.lined),
+      Number.MIN_SAFE_INTEGER
+    );
+
+    shortestPrimArrowLength = primLines.reduce(
+      (acc, p) => Math.min(acc, p.lined),
+      Number.MAX_SAFE_INTEGER
+    );
+
+    primLines.forEach((p, i) => {
+      p.showArrows = params.primMstShowArrows;
+
+      if (params.primMstShowArrows) {
         if (params.primMstArrowDist !== p.arrowDistance)
           p.setArrowDistance(params.primMstArrowDist);
+
         p.arrowWidth = params.primMstArrowWidth;
         p.arrowHeight = params.primMstArrowHeight;
       }
+
       p.draw();
     });
     pop();

@@ -227,7 +227,7 @@ export default function tp(
     label: "reorderAfterDropOut",
   });
 
-  const primF = pane.addFolder({ title: "Prim MST", expanded: false });
+  const primF = pane.addFolder({ title: "Prim Lines", expanded: false });
   primF.addInput(params, "primMstIsBezierDistSwing", {
     label: "isBezierDistSwing",
   });
@@ -279,18 +279,18 @@ export default function tp(
   });
 
   const debugF = pane.addFolder({ title: "Debug", expanded: true });
-  debugF.addInput(params, "showCellTrimCircles", {
-    label: "Show Trim Circles",
-  });
-  debugF.addSeparator();
+  // debugF.addInput(params, "showCellTrimCircles", {
+  //   label: "Show Trim Circles",
+  // });
+  // debugF.addSeparator();
   debugF.addInput(params, "showCells", { label: "Show Cells" });
   debugF.addInput(params, "showCellSites", { label: "Show Cell Sites" });
-  debugF.addInput(params, "showPrimMst", { label: "Show Prim MST" });
+  debugF.addInput(params, "showPrimLines", { label: "Show Prim Lines" });
   const highlightPrimMstIndexInput = debugF.addInput(
     params,
     "highlightPrimMstIndex",
     {
-      label: "Highlight Prim MST",
+      label: "Highlight Prim Line",
       min: -1,
       max: 400, // will be set when actualCellCountMonitor updates
       step: 1,

@@ -1,6 +1,8 @@
 let didAudioInit = false;
 let bigfm;
 
+let sampleRate;
+
 export async function init() {
   // must specify workletPath before initializing Gibberish
   Gibberish.workletPath = "/static/vendor/gibberish_worklet.js";
@@ -11,9 +13,12 @@ export async function init() {
   await Gibberish.init();
 
   Gibberish.export(window);
+  sampleRate = Gibberish.ctx.sampleRate;
+
+  console.log(Gibberish.ctx);
 
   const kik = Kick().connect(); // connects to master output by default
-  const seq = Sequencer.make([0.25, 0.125], [44100], kik, "trigger").start();
+  const seq = Sequencer.make([0.5, 0.25], [sampleRate], kik, "trigger").start();
 
   // bigfm = PolyFM({
   //   gain: 0.15,
@@ -21,8 +26,8 @@ export async function init() {
   //   index: 1.2,
   //   carrierWaveform: "triangle",
   //   modulatorWaveform: "square",
-  //   attack: 44100 * 32,
-  //   decay: 44100 * 32,
+  //   attack: sampleRate * 32,
+  //   decay: sampleRate * 32,
   //   feedback: 0.1,
   // }).connect();
 
@@ -32,15 +37,15 @@ export async function init() {
     index: 1.2,
     carrierWaveform: "triangle",
     modulatorWaveform: "square",
-    // attack: 44100 * 32,
-    // decay: 44100 * 32,
+    // attack: sampleRate * 32,
+    // decay: sampleRate * 32,
     feedback: 0.1,
   });
 
   // bigfm = PolySynth({
   //   maxVoices: 4,
   //   attack: 44,
-  //   decay: 22050,
+  //   decay: sampleRate / 2,
   //   gain: 0.1,
   // });
 
@@ -60,5 +65,5 @@ export function play() {
   }
 
   // bigfm.chord([110, 220, 330, 440]);
-  bigfm.chord([220, 330, 440, 550]);
+  // bigfm.chord([220, 330, 440, 550]);
 }

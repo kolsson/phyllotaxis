@@ -11,6 +11,7 @@ import { calcCentroid } from "./helpers/polygons";
 import { furthestDistOfCells, voronoiGetSite } from "./helpers/voronoi";
 import chaikin from "./helpers/chaikin";
 import prim from "./helpers/prim";
+import * as easing from "./helpers/easing";
 
 import * as audio from "./audio";
 
@@ -37,10 +38,8 @@ let vd;
 let primMst;
 let primLines = [];
 
-// audio setup finished after first click
-// there may be a race condition if we don't finish
-// initing before a sound should be triggered
-audio.init();
+// audio
+let metronomet = 1;
 
 // ----------------------------------------------------------------------------
 // define parameters
@@ -94,7 +93,7 @@ const params = {
   // debugging
   showCellTrimCircles: false,
   showCells: true,
-  showPrimMst: true,
+  showPrimLines: true,
   highlightPrimMstIndex: -1,
   showCellSites: false,
   showCellText: false,
@@ -139,6 +138,9 @@ sketch.setup = () => {
 
   frameRate(30);
 
+  // audio setup finished after first click
+  audio.init();
+
   // build our tweakpane
   pane = tweakpane(params, _compute, _redraw, _didLoadPreset);
 
@@ -152,19 +154,35 @@ sketch.setup = () => {
 
 sketch.draw = () => {
   background(255);
+
+  // center origin
+  translate(width / 2, height / 2);
+
   drawCells();
+
+  // global metronome
+  updateMetronome();
+
+  // EXPERIMENTING
+  drawExperimenting();
 };
 
 // ----------------------------------------------------------------------------
 // fancyline callbacks
 // ----------------------------------------------------------------------------
 
-const primStrokeWeight = (m, i) =>
-  (i === params.highlightPrimMstIndex ? 2 : 1) / params.scale;
+const primStrokeWeight = () => 1 / params.scale;
+
+const primStroke = (m, i) => {
+  if (i === params.highlightPrimMstIndex) return color(255, 0, 0);
+  return color(92, 92, 92);
+};
 
 const primArrowStroke = (m, i, d, t) => {
   // adjust 8 multiplier to speed up or slow down fade in / out
   const a = Math.min(1, (((t > 0.5 ? 1 - t : t) * d) / 15) * 8);
+
+  if (i === params.highlightPrimMstIndex) return color(255, 0, 0, a * 255);
   return color(92, 92, 92, a * 255);
 };
 
@@ -435,7 +453,7 @@ const computeCells = () => {
         ep: cells[e[1]].site, // cells[e[1]].centroid,
         index, // each line has a unique index
         // index: e[0], // set our index to our site
-        stroke: [92, 92, 92],
+        stroke: primStroke,
         strokeWeight: primStrokeWeight,
         extendStart: extend,
         extendEnd: extend,
@@ -464,8 +482,11 @@ const computeCells = () => {
 // ----------------------------------------------------------------------------
 
 const drawCells = () => {
-  // begin
-  translate(width / 2, height / 2);
+  // unscaled space
+
+  push();
+
+  // scaled / translated space
   scale(params.scale);
   translate(params.canvasX, params.canvasY);
 
@@ -510,7 +531,7 @@ const drawCells = () => {
   });
 
   // prim tree
-  if (params.showPrimMst) {
+  if (params.showPrimLines) {
     push();
 
     // get our longest and shortest lines (straight point-to-point distance)
@@ -543,18 +564,56 @@ const drawCells = () => {
 
   // debug clip circles
   // circles do not reflect spacing out of cells
-  if (params.showCellTrimCircles) {
-    push();
-    stroke(0, 0, 255);
-    circle(0, 0, car * 2);
+  // if (params.showCellTrimCircles) {
+  //   push();
+  //   stroke(0, 0, 255);
+  //   circle(0, 0, car * 2);
 
-    stroke(255, 0, 0);
-    circle(0, 0, cbr * 2);
-    pop();
+  //   stroke(255, 0, 0);
+  //   circle(0, 0, cbr * 2);
+  //   pop();
+  // }
+
+  pop();
+};
+
+// ----------------------------------------------------------------------------
+// update (and draw) metronome
+// ----------------------------------------------------------------------------
+
+const updateMetronome = () => {
+  // 60 bpm
+
+  push();
+
+  stroke(255, 0, 0);
+  strokeWeight(1);
+
+  rectMode(CENTER);
+
+  // line
+
+  const lsx = -width / 6;
+  const lex = -lsx;
+  const ly = height / 2 - 20;
+  line(lsx, ly, lex, ly);
+
+  // "pendulum"
+
+  const pwidth = 10;
+  const pheight = 24;
+
+  if (Gibberish.ctx) {
+    const { currentTime } = Gibberish.ctx;
+
+    metronomet = currentTime - Math.floor(currentTime);
+    metronomet = easing.easeOutQuart(metronomet);
   }
 
-  // EXPERIMENTING
-  drawExperimenting();
+  const px = lerp(lsx + pwidth / 2, lex - pwidth / 2, metronomet);
+  rect(px, ly, pwidth, pheight);
+
+  pop();
 };
 
 // ----------------------------------------------------------------------------

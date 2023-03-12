@@ -16,3 +16,8 @@ body {
   min-width: 340px;
   z-index: 1000;
 }
+
+canvas {
+  border: 1px dotted rgb(92, 92, 92);
+  margin: 8px;
+}

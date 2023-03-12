@@ -1,6 +1,5 @@
 import "./style.css";
 import p5 from "p5";
-import * as Tone from "tone";
 import * as Voronoi from "voronoi/rhill-voronoi-core";
 import hull from "hull.js";
 
@@ -13,9 +12,12 @@ import { furthestDistOfCells, voronoiGetSite } from "./helpers/voronoi";
 import chaikin from "./helpers/chaikin";
 import prim from "./helpers/prim";
 
-// experimenting
-import { computeExperimenting, drawExperimenting } from "./experiments";
+import * as audio from "./audio";
 
+// experimenting
+import { computeExperimenting, drawExperimenting } from "./experimenting";
+
+// p5
 const sketch = window;
 window.p5 = p5;
 
@@ -34,6 +36,11 @@ let vd;
 // prim
 let primMst;
 let primLines = [];
+
+// audio setup finished after first click
+// there may be a race condition if we don't finish
+// initing before a sound should be triggered
+audio.init();
 
 // ----------------------------------------------------------------------------
 // define parameters
@@ -589,7 +596,7 @@ sketch.mouseMoved = () => {
   }
 };
 
-sketch.mousePressed = () => {
+sketch.mousePressed = async () => {
   // if we aren't dragging see if we clicked on a cell
 
   if (!draggingModifier) {
@@ -598,6 +605,8 @@ sketch.mousePressed = () => {
       const y = (mouseY + yt) / params.scale - params.canvasY;
 
       selectedCellIndex = voronoiGetSite(cells, x, y);
+
+      audio.play();
     }
   } else if (mouseX < width && mouseY < height) {
     startedDragOnCanvas = true;
@@ -634,22 +643,3 @@ sketch.mouseWheel = (e) => {
   // update our tweakpane
   pane?.refresh();
 };
-
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-
-// test synthesizer if we are using audio
-
-// test synthesizer
-// let toneStarted = false;
-// let synth;
-
-// sketch.mousePressed = async () => {
-//   if (!toneStarted) {
-//     await Tone.start();
-//     synth = new Tone.Synth().toDestination();
-//     toneStarted = true;
-//   }
-
-//   synth.triggerAttackRelease("C4", "8n");
-// };

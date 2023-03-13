@@ -90,13 +90,6 @@ export default function tp(
   // monitors
   const actualCellCountMonitor = pane.addMonitor(params, "actualCellCount", {});
 
-  // currently just actualCellCount - 1
-  // const actualPrimLinesCountMonitor = pane.addMonitor(
-  //   params,
-  //   "actualPrimLinesCount",
-  //   {}
-  // );
-
   // core params
   const cellsF = pane.addFolder({ title: "Cells", expanded: false });
   cellsF.addInput(params, "cellCount", {
@@ -279,10 +272,6 @@ export default function tp(
   });
 
   const debugF = pane.addFolder({ title: "Debug", expanded: true });
-  // debugF.addInput(params, "showCellTrimCircles", {
-  //   label: "Show Trim Circles",
-  // });
-  // debugF.addSeparator();
   debugF.addInput(params, "showCells", { label: "Show Cells" });
   debugF.addInput(params, "showCellSites", { label: "Show Cell Sites" });
   debugF.addInput(params, "showPrimLines", { label: "Show Prim Lines" });

@@ -456,9 +456,9 @@ export default class FancyLine {
   // public draw method
   // ----------------------------------------------------------------------------
 
-  draw(highlighted) {
-    // store our millis() for later
-    const m = millis();
+  draw(_m) {
+    // our millis()
+    const m = _m ?? millis();
 
     // set our strokeWeight, if needed
     if (this.strokeWeight !== undefined) {

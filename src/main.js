@@ -39,7 +39,6 @@ let primMst;
 let primLines = [];
 
 // audio
-let metronomet = 1;
 
 // ----------------------------------------------------------------------------
 // define parameters
@@ -91,7 +90,6 @@ const params = {
   primMstArrowSpeed: 1,
 
   // debugging
-  showCellTrimCircles: false,
   showCells: true,
   showPrimLines: true,
   highlightPrimMstIndex: -1,
@@ -161,7 +159,7 @@ sketch.draw = () => {
   drawCells();
 
   // global metronome
-  updateMetronome();
+  // drawMetronome();
 
   // EXPERIMENTING
   drawExperimenting();
@@ -230,8 +228,6 @@ const reorderCells = () => {
 // compute cells
 // ----------------------------------------------------------------------------
 
-let car, cbr;
-
 const computeCells = () => {
   // reset our random seed
   noiseSeed(420);
@@ -291,10 +287,10 @@ const computeCells = () => {
   );
 
   // find a circle A that encompasses the remaining cells
-  car = furthestDistOfCells(cells, 0, 0);
+  const car = furthestDistOfCells(cells, 0, 0);
 
   // shrink the circle to create circle B
-  cbr = car - params.cellTrimR;
+  const cbr = car - params.cellTrimR;
 
   // clip cells using circle B
   cells = cells.map((c) => {
@@ -482,8 +478,6 @@ const computeCells = () => {
 // ----------------------------------------------------------------------------
 
 const drawCells = () => {
-  // unscaled space
-
   push();
 
   // scaled / translated space
@@ -494,6 +488,9 @@ const drawCells = () => {
   const ts = params.textSize / params.scale;
   textSize(ts);
   const textMiddle = ts / 2 - textAscent() * 0.8; // magic number, font specific
+
+  // get our millis
+  const m = metronomeMillis();
 
   cells.forEach((c, i) => {
     // cell boundaries
@@ -557,31 +554,19 @@ const drawCells = () => {
         p.arrowHeight = params.primMstArrowHeight;
       }
 
-      p.draw();
+      p.draw(m);
     });
     pop();
   }
-
-  // debug clip circles
-  // circles do not reflect spacing out of cells
-  // if (params.showCellTrimCircles) {
-  //   push();
-  //   stroke(0, 0, 255);
-  //   circle(0, 0, car * 2);
-
-  //   stroke(255, 0, 0);
-  //   circle(0, 0, cbr * 2);
-  //   pop();
-  // }
 
   pop();
 };
 
 // ----------------------------------------------------------------------------
-// update (and draw) metronome
+// metronome
 // ----------------------------------------------------------------------------
 
-const updateMetronome = () => {
+const drawMetronome = () => {
   // 60 bpm
 
   push();
@@ -603,17 +588,32 @@ const updateMetronome = () => {
   const pwidth = 10;
   const pheight = 24;
 
-  if (Gibberish.ctx) {
-    const { currentTime } = Gibberish.ctx;
-
-    metronomet = currentTime - Math.floor(currentTime);
-    metronomet = easing.easeOutQuart(metronomet);
-  }
-
-  const px = lerp(lsx + pwidth / 2, lex - pwidth / 2, metronomet);
+  const px = lerp(lsx + pwidth / 2, lex - pwidth / 2, metronomeT());
   rect(px, ly, pwidth, pheight);
 
   pop();
+};
+
+const metronomeMillis = () => {
+  if (!Gibberish.ctx) return 1000;
+
+  const { currentTime } = Gibberish.ctx;
+
+  let t = currentTime - Math.floor(currentTime);
+  t = (t * 2 + easing.easeOutCubic(t) * 3) / 5;
+
+  return (Math.floor(currentTime) + t) * 1000;
+};
+
+const metronomeT = () => {
+  if (!Gibberish.ctx) return 1;
+
+  const { currentTime } = Gibberish.ctx;
+
+  let t = currentTime - Math.floor(currentTime);
+  t = (t * 2 + easing.easeOutCubic(t) * 3) / 5;
+
+  return t;
 };
 
 // ----------------------------------------------------------------------------

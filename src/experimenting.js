@@ -16,14 +16,14 @@ export function computeExperimenting() {
   //     ep: { x: 200, y: -200 },
   //     index: -1,
   //     stroke: [92, 92, 92],
-  //     strokeWeight: primStrokeWeight,
+  //     strokeWeight: mstLineStrokeWeight,
   //     bezierSwing: 200,
   //     showArrows: true,
-  //     arrowDistance: params.primMstArrowDist,
-  //     arrowWidth: params.primMstArrowWidth,
-  //     arrowHeight: params.primMstArrowHeight,
-  //     arrowStroke: primArrowStroke,
-  //     arrowInterp: primArrowInterp,
+  //     arrowDistance: params.mstLineArrowDist,
+  //     arrowWidth: params.mstLineArrowWidth,
+  //     arrowHeight: params.mstLineArrowHeight,
+  //     arrowStroke: mstLineArrowStroke,
+  //     arrowInterp: mstLineArrowInterp,
   //   })
   // );
   //

@@ -1,5 +1,5 @@
 import { Pane } from "tweakpane";
-import { presets } from "../presets";
+import presets from "../presets";
 
 // properties that need to be recomputed when updated
 
@@ -23,7 +23,7 @@ const computeKeys = {
   cellDropOutNoisePosMult: true,
   cellDropOutMod: true,
   cellReorderAfterDropOut: true,
-  primMstIsBezierDistSwing: true,
+  mstLineIsBezierDistSwing: true,
 };
 
 export default function tp(
@@ -159,7 +159,7 @@ export default function tp(
     step: 0.5,
   });
 
-  const sitesF = pane.addFolder({ title: "Sites", expanded: false });
+  const sitesF = pane.addFolder({ title: "Cell Sites", expanded: false });
   sitesF.addInput(params, "cellSiteCircleRMult", {
     label: "siteCircleRMult",
     min: 0,
@@ -167,7 +167,7 @@ export default function tp(
     step: 0.05,
   });
 
-  const clipF = pane.addFolder({ title: "Clipping", expanded: false });
+  const clipF = pane.addFolder({ title: "Cell Clipping", expanded: false });
   clipF.addInput(params, "cellClipMult", {
     label: "clipMult",
     min: 0.5,
@@ -181,7 +181,7 @@ export default function tp(
     step: 1,
   });
 
-  const dropOutF = pane.addFolder({ title: "Drop Out", expanded: false });
+  const dropOutF = pane.addFolder({ title: "Cell Drop Out", expanded: false });
 
   dropOutF.addInput(params, "cellDropOutType", {
     label: "dropOutType",
@@ -220,51 +220,51 @@ export default function tp(
     label: "reorderAfterDropOut",
   });
 
-  const primF = pane.addFolder({ title: "Prim Lines", expanded: false });
-  primF.addInput(params, "primMstIsBezierDistSwing", {
+  const mstLinesF = pane.addFolder({ title: "MST Lines", expanded: false });
+  mstLinesF.addInput(params, "mstLineIsBezierDistSwing", {
     label: "isBezierDistSwing",
   });
-  primF.addInput(params, "primMstBezierSwingStart", {
+  mstLinesF.addInput(params, "mstLineBezierSwingStart", {
     label: "bezierSwingStart",
     min: 0,
     max: 40,
     step: 0.25,
   });
-  primF.addInput(params, "primMstBezierSwingEnd", {
+  mstLinesF.addInput(params, "mstLineBezierSwingEnd", {
     label: "bezierSwingEnd",
     min: 0,
     max: 40,
     step: 0.25,
   });
-  primF.addInput(params, "primMstBezierSwingSensitivity", {
+  mstLinesF.addInput(params, "mstLineBezierSwingSensitivity", {
     label: "bezierSwingSensitivity",
     min: 0,
     max: 2,
     step: 0.01,
   });
 
-  primF.addInput(params, "primMstShowArrows", {
+  mstLinesF.addInput(params, "mstLineShowArrows", {
     label: "showArrows",
   });
-  primF.addInput(params, "primMstArrowDist", {
+  mstLinesF.addInput(params, "mstLineArrowDist", {
     label: "arrowDist",
     min: 5,
     max: 100,
     step: 1,
   });
-  primF.addInput(params, "primMstArrowWidth", {
+  mstLinesF.addInput(params, "mstLineArrowWidth", {
     label: "arrowWidth",
     min: 1,
     max: 20,
     step: 0.5,
   });
-  primF.addInput(params, "primMstArrowHeight", {
+  mstLinesF.addInput(params, "mstLineArrowHeight", {
     label: "arrowHeight",
     min: 1,
     max: 20,
     step: 0.5,
   });
-  primF.addInput(params, "primMstArrowSpeed", {
+  mstLinesF.addInput(params, "mstLineArrowSpeed", {
     label: "arrowSpeed",
     min: 0.2,
     max: 4,
@@ -275,9 +275,9 @@ export default function tp(
   debugF.addInput(params, "showCells", { label: "Show Cells" });
   debugF.addInput(params, "showCellSites", { label: "Show Cell Sites" });
   debugF.addInput(params, "showPrimLines", { label: "Show Prim Lines" });
-  const highlightPrimMstIndexInput = debugF.addInput(
+  const highlightMstLineIndexInput = debugF.addInput(
     params,
-    "highlightPrimMstIndex",
+    "highlightMstLineIndex",
     {
       label: "Highlight Prim Line",
       min: -1,
@@ -304,25 +304,25 @@ export default function tp(
 
   // montor updates
 
-  let highlightPrimMstIndexInputMax = 0;
+  let highlightMstLineIndexInputMax = 0;
 
   actualCellCountMonitor.on("update", (e) => {
     // unsafe: https://github.com/cocopon/tweakpane/issues/360
     const max = e.value - 1;
 
-    if (highlightPrimMstIndexInputMax !== max) {
-      const stc = highlightPrimMstIndexInput.controller_.valueController;
+    if (highlightMstLineIndexInputMax !== max) {
+      const stc = highlightMstLineIndexInput.controller_.valueController;
       const sc = stc.sliderController;
       sc.props.set("maxValue", max);
 
       // Tweakpane limits the input range, but not the value itself
       // it has to be updated manually
-      if (params.highlightPrimMstIndex > max) {
-        params.highlightPrimMstIndex = max;
+      if (params.highlightMstLineIndex > max) {
+        params.highlightMstLineIndex = max;
         pane.refresh();
       }
 
-      highlightPrimMstIndexInputMax = max;
+      highlightMstLineIndexInputMax = max;
     }
   });
 

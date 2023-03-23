@@ -1,6 +1,6 @@
 import p5 from "p5";
 
-import params from "../../params";
+import globals from "../../globals";
 
 export default class PCell {
   constructor({ index, site = { x: 0, y: 0, zerod: 0 }, points = [] }) {
@@ -27,10 +27,10 @@ export default class PCell {
 
   draw({ textMiddle }) {
     // cell boundaries
-    if (params.showCells) {
+    if (globals.debug.showCells) {
       push();
       stroke(92);
-      strokeWeight(1 / params.scale);
+      strokeWeight(1 / globals.canvas.scale);
       fill(this.selected || this.over ? 220 : 255);
 
       beginShape();
@@ -43,17 +43,17 @@ export default class PCell {
     const { x, y } = this.site;
 
     // cell site: circle
-    if (params.showCellSites) {
+    if (globals.debug.showCellSites) {
       push();
-      strokeWeight(1 / params.scale);
-      circle(x, y, params.cellSize * params.cellSiteCircleRMult);
+      strokeWeight(1 / globals.canvas.scale);
+      circle(x, y, globals.cells.cellSize * globals.cells.cellSiteCircleRMult);
       pop();
     }
 
     // cell cite: text
-    if (params.showCellText) {
+    if (globals.debug.showCellText) {
       push();
-      strokeWeight(1 / params.scale);
+      strokeWeight(1 / globals.canvas.scale);
       text(this.index, x, y - textMiddle);
       pop();
     }

@@ -3,17 +3,17 @@
 // ----------------------------------------------------------------------------
 
 // basic
-// const mstLineStrokeWeight = () => 1.5 / params.scale;
+// const mstLineStrokeWeight = () => 1.5 / globals.canvas.scale;
 
 // random
-// const mstLineStrokeWeight = () => (1 + 4 * Math.random()) / params.scale;
+// const mstLineStrokeWeight = () => (1 + 4 * Math.random()) / globals.canvas.scale;
 
 // time based
-// const mstLineStrokeWeight = (m) => (1 + (1 + sin(m / 10))) / params.scale;
+// const mstLineStrokeWeight = (m) => (1 + (1 + sin(m / 10))) / globals.canvas.scale;
 
 // time and index based
 // const mstLineStrokeWeight = (m, i) =>
-//   (1 + (1 + sin(m / 4 + i * 100))) / params.scale;
+//   (1 + (1 + sin(m / 4 + i * 100))) / globals.canvas.scale;
 
 // ----------------------------------------------------------------------------
 // sample arrowStrokes for FancyLine
@@ -43,7 +43,7 @@
 //   lerpColor(
 //     color(startArrowColor),
 //     color(endArrowColor),
-//     i / (params.actualCellCount || 1)
+//     i / (globals.monitors.actualCellCount || 1)
 //   );
 
 // ----------------------------------------------------------------------------

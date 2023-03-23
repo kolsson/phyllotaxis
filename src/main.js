@@ -1,14 +1,20 @@
 import "./style.css";
 import p5 from "p5";
 
-import params from "./params";
+import globals from "./globals";
 
 import PCellController from "./helpers/pCell/pCellController";
 
-import tweakpane from "./helpers/tweakpane";
-
+import {
+  startCanvasAnim,
+  updateCanvasTransform,
+  resetCanvasAnimToCanvasPos,
+  resetCanvasAnimToCanvasScale,
+} from "./helpers/canvasAnimation";
 import * as easing from "./helpers/easing";
 import * as audio from "./audio";
+
+import tweakpane from "./helpers/tweakpane";
 
 // experimenting
 import { computeExperimenting, drawExperimenting } from "./experimenting";
@@ -29,9 +35,23 @@ let cellController;
 
 const _compute = () => computeScene();
 const _redraw = () => redraw();
-const _didLoadPreset = () => {
+const _didLoadPreset = (initial = false) => {
   selectedCellIndex = -1;
+
   computeScene();
+
+  // set up our canvas animation
+  // if this is our initial animation, delay 1 second
+
+  startCanvasAnim({
+    startScale: 1,
+    startCanvasX: 0,
+    startCanvasY: 0,
+    endScale: globals.canvas.scaleToFit,
+    delay: initial ? 500 : 0,
+    duration: 600,
+  });
+
   redraw();
 };
 
@@ -40,15 +60,18 @@ const _didLoadPreset = () => {
 // ----------------------------------------------------------------------------
 
 let pane;
+const canvasWidth = 800;
+const canvasHeight = 800;
+const uiWidth = 150;
 
 sketch.setup = () => {
-  createCanvas(800, 800);
+  createCanvas(canvasWidth + uiWidth, canvasHeight);
 
   // canvas
-  xl = -width / 2;
-  xr = width / 2;
-  yt = -height / 2;
-  yb = height / 2;
+  xl = -canvasWidth / 2;
+  xr = canvasWidth / 2;
+  yt = -canvasHeight / 2;
+  yb = canvasHeight / 2;
 
   // cell controller
   cellController = new PCellController({ xl, xr, yt, yb });
@@ -68,7 +91,7 @@ sketch.setup = () => {
   audio.init();
 
   // build our tweakpane
-  pane = tweakpane(params, _compute, _redraw, _didLoadPreset);
+  pane = tweakpane(_compute, _redraw, _didLoadPreset);
 
   // start
   computeScene();
@@ -81,11 +104,22 @@ sketch.setup = () => {
 sketch.draw = () => {
   background(255);
 
-  // make our canvas center our origin
-  translate(width / 2, height / 2);
-
   // draw our scene
+  push();
+  translate(canvasWidth / 2, canvasHeight / 2);
   drawScene();
+  pop();
+
+  // draw our UI
+  push();
+  stroke(92);
+  line(canvasWidth, 0, canvasWidth, canvasHeight);
+
+  noStroke();
+  fill(255);
+  rect(canvasWidth + 1, 0, canvasWidth - 1, canvasHeight);
+
+  pop();
 
   // EXPERIMENTING
   drawExperimenting();
@@ -110,9 +144,8 @@ const computeScene = () => {
 const drawScene = () => {
   push();
 
-  // scaled / translated space
-  scale(params.scale);
-  translate(params.canvasX, params.canvasY);
+  // update canvas transform
+  updateCanvasTransform();
 
   // draw
   cellController.draw(metronomeMillis());
@@ -184,13 +217,18 @@ sketch.mousePressed = async () => {
   // if we aren't dragging see if we clicked on a cell
 
   if (!draggingModifier) {
-    if (mouseX >= 0 && mouseX < width && mouseY >= 0 && mouseY < height) {
+    if (
+      mouseX >= 0 &&
+      mouseX < canvasWidth &&
+      mouseY >= 0 &&
+      mouseY < canvasHeight
+    ) {
       selectedCellIndex = cellController.checkMouseCell(
         selectedCellIndex,
         "selected"
       );
     }
-  } else if (mouseX < width && mouseY < height) {
+  } else if (mouseX < canvasWidth && mouseY < canvasHeight) {
     startedDragOnCanvas = true;
   }
 
@@ -198,8 +236,8 @@ sketch.mousePressed = async () => {
   mousePressedX = mouseX;
   mousePressedY = mouseY;
 
-  startCanvasX = params.canvasX;
-  startCanvasY = params.canvasY;
+  startCanvasX = globals.canvas.x;
+  startCanvasY = globals.canvas.y;
 };
 
 sketch.mouseReleased = () => {
@@ -208,19 +246,25 @@ sketch.mouseReleased = () => {
 
 sketch.mouseDragged = () => {
   if (draggingModifier && startedDragOnCanvas) {
-    params.canvasX = startCanvasX + (mouseX - mousePressedX) / params.scale;
-    params.canvasY = startCanvasY + (mouseY - mousePressedY) / params.scale;
+    globals.canvas.x =
+      startCanvasX + (mouseX - mousePressedX) / globals.canvas.scale;
+    globals.canvas.y =
+      startCanvasY + (mouseY - mousePressedY) / globals.canvas.scale;
+
+    resetCanvasAnimToCanvasPos();
   }
 };
 
 sketch.mouseWheel = (e) => {
   // scale range is 0.1 - 4 (also defined in tweakpane)
 
-  params.scale = constrain(
-    Math.round((params.scale + e.delta / 128) * 10) / 10,
+  globals.canvas.scale = constrain(
+    Math.round((globals.canvas.scale + e.delta / 128) * 10) / 10,
     0.1,
-    4
+    8
   );
+
+  resetCanvasAnimToCanvasScale();
 
   // update our tweakpane
   pane?.refresh();

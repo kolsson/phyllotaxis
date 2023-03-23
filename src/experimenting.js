@@ -19,9 +19,9 @@ export function computeExperimenting() {
   //     strokeWeight: mstLineStrokeWeight,
   //     bezierSwing: 200,
   //     showArrows: true,
-  //     arrowDistance: params.mstLineArrowDist,
-  //     arrowWidth: params.mstLineArrowWidth,
-  //     arrowHeight: params.mstLineArrowHeight,
+  //     arrowDistance: globals.mstLines.mstLineArrowDist,
+  //     arrowWidth: globals.mstLines.mstLineArrowWidth,
+  //     arrowHeight: globals.mstLines.mstLineArrowHeight,
   //     arrowStroke: mstLineArrowStroke,
   //     arrowInterp: mstLineArrowInterp,
   //   })

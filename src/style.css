@@ -13,11 +13,11 @@ body {
 
 /* tweakpane label width */
 .tp-dfwv {
-  min-width: 340px;
+  min-width: 310px;
   z-index: 1000;
 }
 
 canvas {
-  border: 1px dotted rgb(92, 92, 92);
+  border: 1px solid rgb(92, 92, 92);
   margin: 8px;
 }

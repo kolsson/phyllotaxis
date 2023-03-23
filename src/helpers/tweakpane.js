@@ -1,4 +1,9 @@
 import { Pane } from "tweakpane";
+
+import { flattenObject, mergeCategoryKeyValues } from "./objects";
+import { startCanvasAnim } from "./canvasAnimation";
+
+import globals from "../globals";
 import presets from "../presets";
 
 // properties that need to be recomputed when updated
@@ -27,7 +32,6 @@ const computeKeys = {
 };
 
 export default function tp(
-  params,
   computeCallback,
   redrawCallback,
   didLoadPresetCallback
@@ -50,9 +54,14 @@ export default function tp(
 
   presetsList.on("change", (e) => {
     areUpdatesPaused = true;
-    pane.importPreset({ ...params, ...presets[e.value] });
+    const preset = presets[e.value];
+    pane.importPreset(flattenObject(preset));
     areUpdatesPaused = false;
-    didLoadPresetCallback();
+
+    // manually inject all our preset properties; some may not have tweakpane inputs
+    mergeCategoryKeyValues(globals, preset);
+
+    didLoadPresetCallback(false);
   });
 
   const exportButton = pane.addButton({
@@ -75,48 +84,56 @@ export default function tp(
   });
 
   centerButton.on("click", () => {
-    params.canvasX = 0;
-    params.canvasY = 0;
-  });
-
-  pane.addInput(params, "scale", {
-    min: 0.1,
-    max: 4,
-    step: 0.05,
+    startCanvasAnim({
+      startScale: globals.canvas.scale,
+      startCanvasX: globals.canvas.x,
+      startCanvasY: globals.canvas.y,
+      endScale: globals.canvas.scaleToFit,
+      endCanvasX: 0,
+      endCanvasY: 0,
+      duration: 600,
+    });
   });
 
   pane.addSeparator();
 
-  // monitors
-  const actualCellCountMonitor = pane.addMonitor(params, "actualCellCount", {});
+  // monitors + canvas
+  pane.addMonitor(globals.canvas, "scale", {});
+  pane.addMonitor(globals.canvas, "x", {});
+  pane.addMonitor(globals.canvas, "y", {});
+  const actualCellCountMonitor = pane.addMonitor(
+    globals.monitors,
+    "actualCellCount",
+    {}
+  );
 
-  // core params
+  // core globals
   const cellsF = pane.addFolder({ title: "Cells", expanded: false });
-  cellsF.addInput(params, "cellCount", {
+  cellsF.addInput(globals.cells, "cellCount", {
     label: "count",
     min: 50,
     max: 1000,
     step: 1,
   });
-  cellsF.addInput(params, "startCell", {
+  cellsF.addInput(globals.cells, "startCell", {
     label: "start",
     min: 0,
     max: 50,
     step: 1,
   });
-  cellsF.addInput(params, "cellAngle", {
+  cellsF.addInput(globals.cells, "cellAngle", {
     label: "angle",
     min: 100,
     max: 179,
     step: 1,
   });
-  cellsF.addInput(params, "cellAngleFrac", {
+  cellsF.addInput(globals.cells, "cellAngleFrac", {
     label: "angleFrac",
     min: 0,
     max: 1,
     step: 0.1,
   });
-  cellsF.addInput(params, "cellSize", {
+  cellsF.addInput(globals.cells, "cellSize", {
     label: "size",
     min: 6,
     max: 40,
@@ -127,32 +144,32 @@ export default function tp(
     title: "Cell Padding",
     expanded: false,
   });
-  cellPaddingF.addInput(params, "cellPaddingType", {
+  cellPaddingF.addInput(globals.cells, "cellPaddingType", {
     label: "type",
     options: {
       linear: "linear",
       exponential: "exponential",
     },
   });
-  cellPaddingF.addInput(params, "cellPaddingAmount", {
+  cellPaddingF.addInput(globals.cells, "cellPaddingAmount", {
     label: "amount",
     min: 0,
     max: 2,
     step: 0.01,
   });
-  cellPaddingF.addInput(params, "cellPaddingCurvePower", {
+  cellPaddingF.addInput(globals.cells, "cellPaddingCurvePower", {
     label: "curvePower",
     min: 0.05,
     max: 5,
     step: 0.05,
   });
-  cellPaddingF.addInput(params, "cellPaddingCurveMult", {
+  cellPaddingF.addInput(globals.cells, "cellPaddingCurveMult", {
     label: "curveMult",
     min: 0.05,
     max: 5,
     step: 0.05,
   });
-  cellPaddingF.addInput(params, "cellPaddingCenterPush", {
+  cellPaddingF.addInput(globals.cells, "cellPaddingCenterPush", {
     label: "centerPush",
     min: 0,
     max: 100,
@@ -160,7 +177,7 @@ export default function tp(
   });
 
   const sitesF = pane.addFolder({ title: "Cell Sites", expanded: false });
-  sitesF.addInput(params, "cellSiteCircleRMult", {
+  sitesF.addInput(globals.cells, "cellSiteCircleRMult", {
     label: "siteCircleRMult",
     min: 0,
     max: 2,
@@ -168,13 +185,13 @@ export default function tp(
   });
 
   const clipF = pane.addFolder({ title: "Cell Clipping", expanded: false });
-  clipF.addInput(params, "cellClipMult", {
+  clipF.addInput(globals.cells, "cellClipMult", {
     label: "clipMult",
     min: 0.5,
     max: 4,
     step: 0.1,
   });
-  clipF.addInput(params, "cellTrimR", {
+  clipF.addInput(globals.cells, "cellTrimR", {
     label: "trimR",
     min: 0,
     max: 200,
@@ -183,8 +200,8 @@ export default function tp(
 
   const dropOutF = pane.addFolder({ title: "Cell Drop Out", expanded: false });
 
-  dropOutF.addInput(params, "cellDropOutType", {
-    label: "dropOutType",
+  dropOutF.addInput(globals.cells, "cellDropOutType", {
+    label: "type",
     options: {
       none: "none",
       perlin: "perlin",
@@ -192,102 +209,115 @@ export default function tp(
       mod: "mod",
     },
   });
-  dropOutF.addInput(params, "cellDropOutPercMin", {
-    label: "dropOutPercMin",
+  dropOutF.addInput(globals.cells, "cellDropOutPercMin", {
+    label: "percMin",
     min: 0,
     max: 0.75,
     step: 0.025,
   });
-  dropOutF.addInput(params, "cellDropOutPercMax", {
-    label: "dropOutPercMax",
+  dropOutF.addInput(globals.cells, "cellDropOutPercMax", {
+    label: "percMax",
     min: 0,
     max: 0.75,
     step: 0.025,
   });
-  dropOutF.addInput(params, "cellDropOutNoisePosMult", {
-    label: "dropOutNoisePosMult",
+  dropOutF.addInput(globals.cells, "cellDropOutNoisePosMult", {
+    label: "noisePosMult",
     min: 0.05,
     max: 5,
     step: 0.05,
   });
-  dropOutF.addInput(params, "cellDropOutMod", {
-    label: "dropOutMod",
+  dropOutF.addInput(globals.cells, "cellDropOutMod", {
+    label: "mod",
     min: 1,
     max: 50,
     step: 1,
   });
-  dropOutF.addInput(params, "cellReorderAfterDropOut", {
-    label: "reorderAfterDropOut",
+  dropOutF.addInput(globals.cells, "cellReorderAfterDropOut", {
+    label: "reorderAfter",
   });
 
   const mstLinesF = pane.addFolder({ title: "MST Lines", expanded: false });
-  mstLinesF.addInput(params, "mstLineIsBezierDistSwing", {
-    label: "isBezierDistSwing",
-  });
-  mstLinesF.addInput(params, "mstLineBezierSwingStart", {
-    label: "bezierSwingStart",
-    min: 0,
-    max: 40,
-    step: 0.25,
-  });
-  mstLinesF.addInput(params, "mstLineBezierSwingEnd", {
-    label: "bezierSwingEnd",
-    min: 0,
-    max: 40,
-    step: 0.25,
-  });
-  mstLinesF.addInput(params, "mstLineBezierSwingSensitivity", {
-    label: "bezierSwingSensitivity",
-    min: 0,
-    max: 2,
-    step: 0.01,
+  const mstLinesFTabs = mstLinesF.addTab({
+    pages: [{ title: "Bezier" }, { title: "Arrows" }],
   });
 
-  mstLinesF.addInput(params, "mstLineShowArrows", {
-    label: "showArrows",
+  mstLinesFTabs.pages[0].addInput(
+    globals.mstLines,
+    "mstLineIsBezierDistSwing",
+    {
+      label: "isDistSwing",
+    }
+  );
+  mstLinesFTabs.pages[0].addInput(globals.mstLines, "mstLineBezierSwingStart", {
+    label: "swingStart",
+    min: 0,
+    max: 40,
+    step: 0.25,
   });
-  mstLinesF.addInput(params, "mstLineArrowDist", {
-    label: "arrowDist",
+  mstLinesFTabs.pages[0].addInput(globals.mstLines, "mstLineBezierSwingEnd", {
+    label: "swingEnd",
+    min: 0,
+    max: 40,
+    step: 0.25,
+  });
+  mstLinesFTabs.pages[0].addInput(
+    globals.mstLines,
+    "mstLineBezierSwingSensitivity",
+    {
+      label: "swingSensitivity",
+      min: 0,
+      max: 2,
+      step: 0.01,
+    }
+  );
+
+  mstLinesFTabs.pages[1].addInput(globals.mstLines, "mstLineShowArrows", {
+    label: "show",
+  });
+  mstLinesFTabs.pages[1].addInput(globals.mstLines, "mstLineArrowDist", {
+    label: "dist",
     min: 5,
     max: 100,
     step: 1,
   });
-  mstLinesF.addInput(params, "mstLineArrowWidth", {
-    label: "arrowWidth",
+  mstLinesFTabs.pages[1].addInput(globals.mstLines, "mstLineArrowWidth", {
+    label: "width",
     min: 1,
     max: 20,
     step: 0.5,
   });
-  mstLinesF.addInput(params, "mstLineArrowHeight", {
-    label: "arrowHeight",
+  mstLinesFTabs.pages[1].addInput(globals.mstLines, "mstLineArrowHeight", {
+    label: "height",
     min: 1,
     max: 20,
     step: 0.5,
   });
-  mstLinesF.addInput(params, "mstLineArrowSpeed", {
-    label: "arrowSpeed",
+  mstLinesFTabs.pages[1].addInput(globals.mstLines, "mstLineArrowSpeed", {
+    label: "speed",
     min: 0.2,
     max: 4,
     step: 0.05,
   });
 
   const debugF = pane.addFolder({ title: "Debug", expanded: true });
-  debugF.addInput(params, "showCells", { label: "Show Cells" });
-  debugF.addInput(params, "showCellSites", { label: "Show Cell Sites" });
-  debugF.addInput(params, "showPrimLines", { label: "Show Prim Lines" });
+  debugF.addInput(globals.debug, "showCells", { label: "Show Cells" });
+  debugF.addInput(globals.debug, "showCellSites", { label: "Show Cell Sites" });
+  debugF.addSeparator();
+  debugF.addInput(globals.debug, "showMstLines", { label: "Show MST Lines" });
   const highlightMstLineIndexInput = debugF.addInput(
-    params,
+    globals.debug,
     "highlightMstLineIndex",
     {
-      label: "Highlight Prim Line",
+      label: "Red MST Line",
       min: -1,
-      max: 400, // will be set when actualCellCountMonitor updates
+      max: 400, // will be set when monitors.actualCellCountMonitor updates
       step: 1,
     }
   );
   debugF.addSeparator();
-  debugF.addInput(params, "showCellText", { label: "Show Cell Text" });
-  debugF.addInput(params, "textSize", {
+  debugF.addInput(globals.debug, "showCellText", { label: "Show Cell Text" });
+  debugF.addInput(globals.debug, "textSize", {
     label: "Text Size",
     min: 8,
     max: 14,
@@ -317,8 +347,8 @@ export default function tp(
 
       // Tweakpane limits the input range, but not the value itself
       // it has to be updated manually
-      if (params.highlightMstLineIndex > max) {
-        params.highlightMstLineIndex = max;
+      if (globals.debug.highlightMstLineIndex > max) {
+        globals.debug.highlightMstLineIndex = max;
         pane.refresh();
       }
 
@@ -328,9 +358,14 @@ export default function tp(
 
   // populate with initial preset
   areUpdatesPaused = true;
-  pane.importPreset({ ...params, ...presets[0] });
+  const preset = presets[0];
+  pane.importPreset(flattenObject(preset));
   areUpdatesPaused = false;
-  didLoadPresetCallback();
+
+  // manually inject all our preset properties; some may not have tweakpane inputs
+  mergeCategoryKeyValues(globals, preset);
+
+  didLoadPresetCallback(true);
 
   return pane;
 }

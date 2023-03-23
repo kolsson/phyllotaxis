@@ -3,14 +3,14 @@ lockfileVersion: 5.4
 specifiers:
   hull.js: ^1.0.3
   p5: ^1.5.0
-  tweakpane: ^3.1.4
+  tweakpane: ^3.1.7
   vite: ^4.1.1
   voronoi: ^1.0.0
 
 dependencies:
   hull.js: 1.0.3
   p5: 1.5.0
-  tweakpane: 3.1.4
+  tweakpane: 3.1.7
   voronoi: 1.0.0
 
 devDependencies:
@@ -329,8 +329,8 @@ packages:
     engines: {node: '>= 0.4'}
     dev: true
 
-  /tweakpane/3.1.4:
-    resolution: {integrity: sha512-YCEU6wn3uGMYlD63Lkh7Ahhiw1BzlKX4LOQKRGopHL8YEhOBbjiPVY95wXC1TwgoBpBhRGcfRwtbCRA8fkdO2A==}
+  /tweakpane/3.1.7:
+    resolution: {integrity: sha512-8JF0Ri3cPTv/tUwrb28FBalB6XTW+m3pm2BUMz8gXkvppMjSQ89RMOF/jLdaWhrkRnSayPp5WX9lTDXNqRgK5Q==}
     dev: false
 
   /vite/4.1.1:

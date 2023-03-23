@@ -2,7 +2,7 @@ import p5 from "p5";
 import * as Voronoi from "voronoi/rhill-voronoi-core";
 import hull from "hull.js";
 
-import params from "../../params";
+import globals from "../../globals";
 
 import PCell from "./pCell";
 import FancyLine from "../fancyline/fancyline";
@@ -69,10 +69,10 @@ export default class PCellController {
     this.cells = this.cells.filter((c) =>
       c.points.every(
         (p) =>
-          p.x > this.xl * params.cellClipMult &&
-          p.x < this.xr * params.cellClipMult &&
-          p.y > this.yt * params.cellClipMult &&
-          p.y < this.yb * params.cellClipMult
+          p.x > this.xl * globals.cells.cellClipMult &&
+          p.x < this.xr * globals.cells.cellClipMult &&
+          p.y > this.yt * globals.cells.cellClipMult &&
+          p.y < this.yb * globals.cells.cellClipMult
       )
     );
   }
@@ -87,13 +87,15 @@ export default class PCellController {
 
   shouldNotCullUsingCircle(c, _r) {
     return (
-      dist(0, 0, c.site.x, c.site.y) < r * params.cellClipMult &&
-      c.points.every((p) => dist(0, 0, p.x, p.y) < r * params.cellClipMult)
+      dist(0, 0, c.site.x, c.site.y) < r * globals.cells.cellClipMult &&
+      c.points.every(
+        (p) => dist(0, 0, p.x, p.y) < r * globals.cells.cellClipMult
+      )
     );
   }
 
   dropOutCells(furthestCell) {
-    if (params.cellDropOutType === "perlin") {
+    if (globals.cells.cellDropOutType === "perlin") {
       // perlin noise drop out
       //
       // doesn't matter if we reorder before or after
@@ -101,29 +103,35 @@ export default class PCellController {
       this.cells = this.cells.filter(
         (c) =>
           noise(
-            c.site.x * params.cellDropOutNoisePosMult,
-            c.site.y * params.cellDropOutNoisePosMult
-          ) > random(params.cellDropOutPercMin, params.cellDropOutPercMax)
+            c.site.x * globals.cells.cellDropOutNoisePosMult,
+            c.site.y * globals.cells.cellDropOutNoisePosMult
+          ) >
+          random(
+            globals.cells.cellDropOutPercMin,
+            globals.cells.cellDropOutPercMax
+          )
       );
-    } else if (params.cellDropOutType === "mod") {
+    } else if (globals.cells.cellDropOutType === "mod") {
       // mod drop out
 
-      this.cells = this.cells.filter((c, i) => i % params.cellDropOutMod !== 0);
-    } else if (params.cellDropOutType === "distance") {
+      this.cells = this.cells.filter(
+        (c, i) => i % globals.cells.cellDropOutMod !== 0
+      );
+    } else if (globals.cells.cellDropOutType === "distance") {
       // distance adjusted perlin noise drop out
 
       this.cells = this.cells.filter((c) => {
         const t = c.site.zerod / furthestCell.site.zerod;
         const perc = lerp(
-          params.cellDropOutPercMin,
-          params.cellDropOutPercMax,
+          globals.cells.cellDropOutPercMin,
+          globals.cells.cellDropOutPercMax,
           t
         );
 
         return (
           noise(
-            c.site.x * params.cellDropOutNoisePosMult,
-            c.site.y * params.cellDropOutNoisePosMult
+            c.site.x * globals.cells.cellDropOutNoisePosMult,
+            c.site.y * globals.cells.cellDropOutNoisePosMult
           ) > perc
         );
       });
@@ -157,10 +165,10 @@ export default class PCellController {
       const theta = Math.atan2(centroid.y, centroid.x);
 
       let cp;
-      if (params.cellPaddingType === "linear") {
+      if (globals.cells.cellPaddingType === "linear") {
         // linear
-        cp = params.cellPaddingAmount + 1;
-      } else if (params.cellPaddingType === "exponential") {
+        cp = globals.cells.cellPaddingAmount + 1;
+      } else if (globals.cells.cellPaddingType === "exponential") {
         // exponential
         cp = Math.max(
           1,
@@ -169,14 +177,21 @@ export default class PCellController {
             0,
             furthestCell.site.zerod,
             1,
-            Math.pow(params.cellPaddingAmount + 1, params.cellPaddingCurvePower)
-          ) * params.cellPaddingCurveMult
+            Math.pow(
+              globals.cells.cellPaddingAmount + 1,
+              globals.cells.cellPaddingCurvePower
+            )
+          ) * globals.cells.cellPaddingCurveMult
         );
       }
 
       const newCentroid = {
-        x: d * cp * Math.cos(theta) + params.cellPaddingCenterPush * unit.x,
-        y: d * cp * Math.sin(theta) + params.cellPaddingCenterPush * unit.y,
+        x:
+          d * cp * Math.cos(theta) +
+          globals.cells.cellPaddingCenterPush * unit.x,
+        y:
+          d * cp * Math.sin(theta) +
+          globals.cells.cellPaddingCenterPush * unit.y,
       };
 
       // site
@@ -199,7 +214,7 @@ export default class PCellController {
   // ----------------------------------------------------------------------------
 
   drawCells() {
-    const ts = params.textSize / params.scale;
+    const ts = globals.debug.textSize / globals.canvas.scale;
     textSize(ts);
     const textMiddle = ts / 2 - textAscent() * 0.8; // magic number, font specific
 
@@ -212,7 +227,8 @@ export default class PCellController {
   // ----------------------------------------------------------------------------
 
   createMstLines(mst) {
-    const extend = -(params.cellSize * params.cellSiteCircleRMult) / 2;
+    const extend =
+      -(globals.cells.cellSize * globals.cells.cellSiteCircleRMult) / 2;
 
     return mst.map(
       (e, index) =>
@@ -226,13 +242,13 @@ export default class PCellController {
           strokeWeight: this.mstLineStrokeWeight.bind(this),
           extendStart: extend,
           extendEnd: extend,
-          bezierSwing: params.mstLineIsBezierDistSwing
+          bezierSwing: globals.mstLines.mstLineIsBezierDistSwing
             ? this.mstLineArrowBezierDistSwing.bind(this)
             : this.mstLineArrowBezierSwing.bind(this),
-          showArrows: params.mstLineShowArrows,
-          arrowDistance: params.mstLineArrowDist,
-          arrowWidth: params.mstLineArrowWidth,
-          arrowHeight: params.mstLineArrowHeight,
+          showArrows: globals.mstLines.mstLineShowArrows,
+          arrowDistance: globals.mstLines.mstLineArrowDist,
+          arrowWidth: globals.mstLines.mstLineArrowWidth,
+          arrowHeight: globals.mstLines.mstLineArrowHeight,
           arrowStroke: this.mstLineArrowStroke.bind(this),
           arrowInterp: this.mstLineArrowInterp.bind(this),
         })
@@ -273,14 +289,14 @@ export default class PCellController {
 
     this.mstLines.forEach((line) => {
       // pre-draw updates
-      line.showArrows = params.mstLineShowArrows;
+      line.showArrows = globals.mstLines.mstLineShowArrows;
 
-      if (params.mstLineShowArrows) {
-        if (params.mstLineArrowDist !== line.arrowDistance)
-          line.setArrowDistance(params.mstLineArrowDist);
+      if (globals.mstLines.mstLineShowArrows) {
+        if (globals.mstLines.mstLineArrowDist !== line.arrowDistance)
+          line.setArrowDistance(globals.mstLines.mstLineArrowDist);
 
-        line.arrowWidth = params.mstLineArrowWidth;
-        line.arrowHeight = params.mstLineArrowHeight;
+        line.arrowWidth = globals.mstLines.mstLineArrowWidth;
+        line.arrowHeight = globals.mstLines.mstLineArrowHeight;
       }
 
       // draw line
@@ -291,15 +307,15 @@ export default class PCellController {
   }
 
   // ----------------------------------------------------------------------------
-  // private fancyline callbacks (all bound this)
+  // private fancyline callbacks (all bound to this)
   // ----------------------------------------------------------------------------
 
   mstLineStrokeWeight() {
-    return 1 / params.scale;
+    return 1 / globals.canvas.scale;
   }
 
   mstLineStroke(m, i) {
-    if (i === params.highlightMstLineIndex) return color(255, 0, 0);
+    if (i === globals.debug.highlightMstLineIndex) return color(255, 0, 0);
     return color(92, 92, 92);
   }
 
@@ -307,18 +323,21 @@ export default class PCellController {
     // adjust 8 multiplier to speed up or slow down fade in / out
     const a = Math.min(1, (((t > 0.5 ? 1 - t : t) * d) / 15) * 8);
 
-    if (i === params.highlightMstLineIndex) return color(255, 0, 0, a * 255);
+    if (i === globals.debug.highlightMstLineIndex)
+      return color(255, 0, 0, a * 255);
     return color(92, 92, 92, a * 255);
   }
 
   // use i to stagger things a bit
   mstLineArrowInterp(m, i, d) {
-    return (m * params.mstLineArrowSpeed + i * 1000) / (100 * d);
+    return (m * globals.mstLines.mstLineArrowSpeed + i * 1000) / (100 * d);
   }
 
   // randomly pick a positive or negative sign
   mstLineArrowBezierSwing(m, i) {
-    return params.mstLineBezierSwingStart * Math.sign(1 - 2 * noise(i));
+    return (
+      globals.mstLines.mstLineBezierSwingStart * Math.sign(1 - 2 * noise(i))
+    );
   }
 
   mstLineArrowBezierDistSwing(m, i, lined) {
@@ -328,11 +347,14 @@ export default class PCellController {
     let t =
       (lined - this.shortestMstLineLength) /
       (this.longestMstLineLength - this.shortestMstLineLength);
-    t = constrain(t * params.mstLineBezierSwingSensitivity, 0, 1);
+    t = constrain(t * globals.mstLines.mstLineBezierSwingSensitivity, 0, 1);
 
     const swing =
-      lerp(params.mstLineBezierSwingStart, params.mstLineBezierSwingEnd, t) *
-      Math.sign(1 - 2 * noise(i));
+      lerp(
+        globals.mstLines.mstLineBezierSwingStart,
+        globals.mstLines.mstLineBezierSwingEnd,
+        t
+      ) * Math.sign(1 - 2 * noise(i));
 
     return swing;
   }
@@ -347,11 +369,12 @@ export default class PCellController {
 
     // place our initial phyllotaxis sites
     const p = [];
-    const thetam = (params.cellAngle + params.cellAngleFrac) * (Math.PI / 180);
+    const thetam =
+      (globals.cells.cellAngle + globals.cells.cellAngleFrac) * (Math.PI / 180);
 
-    for (let i = params.startCell; i < params.cellCount; i++) {
+    for (let i = globals.cells.startCell; i < globals.cells.cellCount; i++) {
       const theta = i * thetam;
-      const r = params.cellSize * Math.sqrt(i);
+      const r = globals.cells.cellSize * Math.sqrt(i);
       const x = r * Math.cos(theta);
       const y = r * Math.sin(theta);
       p.push({ x, y });
@@ -360,17 +383,17 @@ export default class PCellController {
     // compute our voronoi diagram
     if (this.vd?.length > 0) v.recycle(vd); // if we have an existing diagram, recycle
     this.vd = this.v.compute(p, {
-      xl: this.xl * params.cellClipMult,
-      xr: this.xr * params.cellClipMult,
-      yt: this.yt * params.cellClipMult,
-      yb: this.yb * params.cellClipMult,
+      xl: this.xl * globals.cells.cellClipMult,
+      xr: this.xr * globals.cells.cellClipMult,
+      yt: this.yt * globals.cells.cellClipMult,
+      yb: this.yb * globals.cells.cellClipMult,
     });
 
     // get our voronoi cells and create new pCells
     // at the same time cull cells outside our bounds circle
     this.cells = [];
     const r = Math.min(this.xr - this.xl, this.yb - this.yt) / 2;
-    const rccm = r * params.cellClipMult;
+    const rccm = r * globals.cells.cellClipMult;
     let index = 0;
 
     for (let i = 0; i < this.vd.cells.length; i++) {
@@ -393,7 +416,7 @@ export default class PCellController {
 
     // find a circle that encompasses the remaining cells
     // shrink the circle to create our clip circle
-    const clipr = this.furthestDistOfCells(0, 0) - params.cellTrimR;
+    const clipr = this.furthestDistOfCells(0, 0) - globals.cells.cellTrimR;
 
     // clip cells using clip circle
     this.cells.forEach((c) => {
@@ -436,13 +459,13 @@ export default class PCellController {
     }, 0);
 
     // reorder cells now?
-    if (!params.cellReorderAfterDropOut) this.reorderCells();
+    if (!globals.cells.cellReorderAfterDropOut) this.reorderCells();
 
     // drop out!
     this.dropOutCells(furthestCell);
 
     // or reorder cells now?
-    if (params.cellReorderAfterDropOut) this.reorderCells();
+    if (globals.cells.cellReorderAfterDropOut) this.reorderCells();
 
     // run prim's algorithm
     const mst = this.computePrimMst();
@@ -463,8 +486,8 @@ export default class PCellController {
     this.computeLongestShortestMstLines();
 
     // update our monitors
-    params.actualCellCount = this.cells.length;
-    params.actualPrimLinesCount = this.mstLines.length;
+    globals.monitors.actualCellCount = this.cells.length;
+    globals.monitors.actualMstLinesCount = this.mstLines.length;
   }
 
   // ----------------------------------------------------------------------------
@@ -476,8 +499,8 @@ export default class PCellController {
 
     let index = currIndex;
 
-    const x = (mouseX + this.xl) / params.scale - params.canvasX;
-    const y = (mouseY + this.yt) / params.scale - params.canvasY;
+    const x = (mouseX + this.xl) / globals.canvas.scale - globals.canvas.x;
+    const y = (mouseY + this.yt) / globals.canvas.scale - globals.canvas.y;
     const i = this.getVoronoiSite(x, y);
 
     if (i !== currIndex) {
@@ -503,6 +526,6 @@ export default class PCellController {
     this.drawCells();
 
     // draw mst lines
-    if (params.showPrimLines) this.drawMstLines(m);
+    if (globals.debug.showMstLines) this.drawMstLines(m);
   }
 }

@@ -7,7 +7,6 @@ import globals from "../globals";
 import presets from "../presets";
 
 // properties that need to be recomputed when updated
-
 const computeKeys = {
   cellCount: true,
   startCell: true,
@@ -32,6 +31,7 @@ const computeKeys = {
 };
 
 export default function tp(
+  cc, // cellController
   computeCallback,
   redrawCallback,
   didLoadPresetCallback
@@ -78,20 +78,19 @@ export default function tp(
   pane.addSeparator();
 
   // ui
-  const centerButton = pane.addButton({
-    title: "center",
+  const resetCanvasButton = pane.addButton({
+    title: "reset",
     label: "canvas",
   });
 
-  centerButton.on("click", () => {
+  resetCanvasButton.on("click", () => {
+    cc.resetCellPosProps();
+
     startCanvasAnim({
-      startScale: globals.canvas.scale,
-      startCanvasX: globals.canvas.x,
-      startCanvasY: globals.canvas.y,
+      startFromCurrScalePos: true,
       endScale: globals.canvas.scaleToFit,
       endCanvasX: 0,
       endCanvasY: 0,
-      duration: 600,
     });
   });
 
@@ -302,7 +301,13 @@ export default function tp(
 
   const debugF = pane.addFolder({ title: "Debug", expanded: true });
   debugF.addInput(globals.debug, "showCells", { label: "Show Cells" });
-  debugF.addInput(globals.debug, "showCellSites", { label: "Show Cell Sites" });
+  debugF.addInput(globals.debug, "showCellSites", { label: "Show Sites" });
+  debugF.addInput(globals.debug, "showCellCentroids", {
+    label: "Show Centroids",
+  });
+  debugF.addInput(globals.debug, "showCellBounds", {
+    label: "Show Bounds",
+  });
   debugF.addSeparator();
   debugF.addInput(globals.debug, "showMstLines", { label: "Show MST Lines" });
   const highlightMstLineIndexInput = debugF.addInput(
@@ -333,7 +338,6 @@ export default function tp(
   });
 
   // montor updates
-
   let highlightMstLineIndexInputMax = 0;
 
   actualCellCountMonitor.on("update", (e) => {

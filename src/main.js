@@ -26,8 +26,8 @@ window.p5 = p5;
 // canvas size
 let xl, xr, yt, yb;
 
-// cells
-let cellController;
+// cell controller
+let cc;
 
 // ----------------------------------------------------------------------------
 // tweakpane callbacks
@@ -36,7 +36,7 @@ let cellController;
 const _compute = () => computeScene();
 const _redraw = () => redraw();
 const _didLoadPreset = (initial = false) => {
-  selectedCellIndex = -1;
+  cc.resetCellPosProps();
 
   computeScene();
 
@@ -49,7 +49,6 @@ const _didLoadPreset = (initial = false) => {
     startCanvasY: 0,
     endScale: globals.canvas.scaleToFit,
     delay: initial ? 500 : 0,
-    duration: 600,
   });
 
   redraw();
@@ -74,7 +73,7 @@ sketch.setup = () => {
   yb = canvasHeight / 2;
 
   // cell controller
-  cellController = new PCellController({ xl, xr, yt, yb });
+  cc = new PCellController({ xl, xr, yt, yb });
 
   // text (for debugging)
   textFont("Helvetica Neue Light");
@@ -91,7 +90,7 @@ sketch.setup = () => {
   audio.init();
 
   // build our tweakpane
-  pane = tweakpane(_compute, _redraw, _didLoadPreset);
+  pane = tweakpane(cc, _compute, _redraw, _didLoadPreset);
 
   // start
   computeScene();
@@ -118,7 +117,6 @@ sketch.draw = () => {
   noStroke();
   fill(255);
   rect(canvasWidth + 1, 0, canvasWidth - 1, canvasHeight);
-
   pop();
 
   // EXPERIMENTING
@@ -131,7 +129,7 @@ sketch.draw = () => {
 
 const computeScene = () => {
   // update our cells
-  cellController.compute();
+  cc.compute();
 
   // EXPERIMENTING
   computeExperimenting();
@@ -148,7 +146,7 @@ const drawScene = () => {
   updateCanvasTransform();
 
   // draw
-  cellController.draw(metronomeMillis());
+  cc.draw(metronomeMillis());
 
   pop();
 };
@@ -185,16 +183,13 @@ const metronomeT = () => {
 // ----------------------------------------------------------------------------
 
 let draggingModifier = false;
-let startedDragOnCanvas = false;
+let draggingCanvas = false;
 
-let startCanvasX = 0;
-let startCanvasY = 0;
+let dragStartCanvasX = 0;
+let dragStartCanvasY = 0;
 
-let mousePressedX = 0;
-let mousePressedY = 0;
-
-let selectedCellIndex = -1;
-let overCellIndex = -1;
+let dragStartX = 0;
+let dragStartY = 0;
 
 sketch.keyPressed = () => {
   if (keyCode === 32) {
@@ -210,53 +205,68 @@ sketch.keyReleased = () => {
 };
 
 sketch.mouseMoved = () => {
-  overCellIndex = cellController.checkMouseCell(overCellIndex, "over");
+  if (globals.canvas.selectedCellIndex === -1) {
+    // NO selected cell
+
+    globals.canvas.overCellIndex = cc.setPropForCellAtPos(
+      mouseX,
+      mouseY,
+      globals.canvas.overCellIndex,
+      "over"
+    );
+  } else {
+    // YES selected cell
+  }
 };
 
 sketch.mousePressed = async () => {
-  // if we aren't dragging see if we clicked on a cell
+  if (globals.canvas.selectedCellIndex === -1) {
+    // NO selected cell
 
-  if (!draggingModifier) {
-    if (
-      mouseX >= 0 &&
-      mouseX < canvasWidth &&
-      mouseY >= 0 &&
-      mouseY < canvasHeight
-    ) {
-      selectedCellIndex = cellController.checkMouseCell(
-        selectedCellIndex,
-        "selected"
-      );
+    if (!draggingModifier) {
+      // we are not holding down our drag modifier, so see where we clicked
+
+      if (
+        mouseX >= 0 &&
+        mouseX < canvasWidth &&
+        mouseY >= 0 &&
+        mouseY < canvasHeight
+      ) {
+        cc.focusOnCell(mouseX, mouseY);
+      }
+    } else if (mouseX < canvasWidth && mouseY < canvasHeight) {
+      // begin dragging
+
+      draggingCanvas = true;
+
+      dragStartX = mouseX;
+      dragStartY = mouseY;
+
+      dragStartCanvasX = globals.canvas.x;
+      dragStartCanvasY = globals.canvas.y;
     }
-  } else if (mouseX < canvasWidth && mouseY < canvasHeight) {
-    startedDragOnCanvas = true;
+  } else {
+    // YES selected cell
   }
-
-  // record where we clicked for later
-  mousePressedX = mouseX;
-  mousePressedY = mouseY;
-
-  startCanvasX = globals.canvas.x;
-  startCanvasY = globals.canvas.y;
 };
 
 sketch.mouseReleased = () => {
-  startedDragOnCanvas = false;
+  draggingCanvas = false;
 };
 
 sketch.mouseDragged = () => {
-  if (draggingModifier && startedDragOnCanvas) {
+  if (draggingModifier && draggingCanvas) {
     globals.canvas.x =
-      startCanvasX + (mouseX - mousePressedX) / globals.canvas.scale;
+      dragStartCanvasX + (mouseX - dragStartX) / globals.canvas.scale;
     globals.canvas.y =
-      startCanvasY + (mouseY - mousePressedY) / globals.canvas.scale;
+      dragStartCanvasY + (mouseY - dragStartY) / globals.canvas.scale;
 
     resetCanvasAnimToCanvasPos();
   }
 };
 
 sketch.mouseWheel = (e) => {
-  // scale range is 0.1 - 4 (also defined in tweakpane)
+  // scale range is 0.1 - 8
 
   globals.canvas.scale = constrain(
     Math.round((globals.canvas.scale + e.delta / 128) * 10) / 10,

@@ -13,6 +13,9 @@ const globals = {
     x: 0,
     y: 0,
     scaleToFit: 1, // scale at which all elements fit on screen
+
+    selectedCellIndex: -1,
+    overCellIndex: -1,
   },
 
   cells: {
@@ -55,9 +58,11 @@ const globals = {
 
   debug: {
     showCells: true,
+    showCellSites: false,
+    showCellCentroids: false,
+    showCellBounds: false,
     showMstLines: true,
     highlightMstLineIndex: -1,
-    showCellSites: false,
     showCellText: false,
     textSize: 10,
   },

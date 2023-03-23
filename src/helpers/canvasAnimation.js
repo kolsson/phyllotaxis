@@ -25,15 +25,33 @@ export function startCanvasAnim({
   endCanvasX = 0,
   endCanvasY = 0,
   delay = 0,
-  duration = 600,
+  duration = 700,
+
+  startFromCurrScalePos = false,
+  scaleDurationByDistance = true,
 }) {
   const m = millis() + delay;
   animStartMillis = m;
-  animStartScale = startScale;
-  animStartCanvasX = startCanvasX;
-  animStartCanvasY = startCanvasY;
 
-  animEndMillis = m + duration;
+  if (startFromCurrScalePos) {
+    animStartScale = globals.canvas.scale;
+    animStartCanvasX = globals.canvas.x;
+    animStartCanvasY = globals.canvas.y;
+  } else {
+    animStartScale = startScale;
+    animStartCanvasX = startCanvasX;
+    animStartCanvasY = startCanvasY;
+  }
+
+  if (scaleDurationByDistance) {
+    // scale our animation duration by the x, y distance we have to travel
+
+    const d = dist(animStartCanvasX, animStartCanvasY, endCanvasX, endCanvasY);
+    animEndMillis = m + duration * Math.max(1, d / 150);
+  } else {
+    animEndMillis = m + duration;
+  }
+
   animEndScale = endScale;
   animEndCanvasX = endCanvasX;
   animEndCanvasY = endCanvasY;
@@ -44,7 +62,7 @@ export function updateCanvasTransform() {
 
   const m = millis();
   const d = animEndMillis - animStartMillis;
-  const t = easing.easeInQuint(constrain((m - animStartMillis) / d, 0, 1));
+  const t = easing.easeInCubic(constrain((m - animStartMillis) / d, 0, 1));
 
   globals.canvas.scale = lerp(animStartScale, animEndScale, t);
   globals.canvas.x = lerp(animStartCanvasX, animEndCanvasX, t);

@@ -3,7 +3,13 @@ import p5 from "p5";
 import globals from "../../globals";
 
 export default class PCell {
-  constructor({ index, site = { x: 0, y: 0, zerod: 0 }, points = [] }) {
+  constructor({
+    index,
+    site = { x: 0, y: 0, zerod: 0 },
+    centroid,
+    bounds,
+    points = [],
+  }) {
     // our index
     this.index = index;
 
@@ -12,6 +18,10 @@ export default class PCell {
     // x, y: point
     // zerod: distance from 0,0
     this.site = { ...site };
+
+    // our centroid and rectangular bounds
+    this.centroid = { ...centroid };
+    this.bounds = { ...bounds };
 
     // our array of points
     this.points = [...points];
@@ -50,11 +60,31 @@ export default class PCell {
       pop();
     }
 
-    // cell cite: text
+    // cell site: text
     if (globals.debug.showCellText) {
       push();
       strokeWeight(1 / globals.canvas.scale);
       text(this.index, x, y - textMiddle);
+      pop();
+    }
+
+    // cell centroid
+    if (this.centroid && globals.debug.showCellCentroids) {
+      push();
+      strokeWeight(1 / globals.canvas.scale);
+      circle(
+        this.centroid.x,
+        this.centroid.y,
+        globals.cells.cellSize * globals.cells.cellSiteCircleRMult
+      );
+      pop();
+    }
+
+    // cell rectangular bounds
+    if (this.bounds && globals.debug.showCellBounds) {
+      push();
+      strokeWeight(1 / globals.canvas.scale);
+      rect(this.bounds.x, this.bounds.y, this.bounds.w, this.bounds.h);
       pop();
     }
   }

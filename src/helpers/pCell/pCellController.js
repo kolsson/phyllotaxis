@@ -8,7 +8,8 @@ import PCell from "./pCell";
 import FancyLine from "../fancyline/fancyline";
 
 import { lineSegmentCircleIntersect, raycast } from "../intersect";
-import { calcCentroid } from "../polygons";
+import { calcCentroid, calcRectBounds } from "../polygons";
+import { startCanvasAnim } from "../canvasAnimation";
 import prim from "../prim";
 import chaikin from "../chaikin";
 
@@ -479,6 +480,12 @@ export default class PCellController {
     // space out our cells
     this.spaceOutCells(furthestCell);
 
+    // calculate our cell centroids and rectangular bounds
+    this.cells.forEach((c) => {
+      c.centroid = calcCentroid(c.points);
+      c.bounds = calcRectBounds(c.points);
+    });
+
     // create our mst lines
     this.mstLines = this.createMstLines(mst);
 
@@ -491,16 +498,23 @@ export default class PCellController {
   }
 
   // ----------------------------------------------------------------------------
-  // public checkMouseCell method
+  // public cell over / focus / reset methods
   // ----------------------------------------------------------------------------
 
-  checkMouseCell(currIndex, prop) {
+  resetCellPosProps() {
+    globals.canvas.selectedCellIndex = -1;
+    globals.canvas.overCellIndex = -1;
+
+    this.cells.forEach((c) => (c.over = c.selected = false));
+  }
+
+  setPropForCellAtPos(px, py, currIndex, prop) {
     // handle over or selected cells
 
     let index = currIndex;
 
-    const x = (mouseX + this.xl) / globals.canvas.scale - globals.canvas.x;
-    const y = (mouseY + this.yt) / globals.canvas.scale - globals.canvas.y;
+    const x = (px + this.xl) / globals.canvas.scale - globals.canvas.x;
+    const y = (py + this.yt) / globals.canvas.scale - globals.canvas.y;
     const i = this.getVoronoiSite(x, y);
 
     if (i !== currIndex) {
@@ -512,6 +526,28 @@ export default class PCellController {
     }
 
     return index;
+  }
+
+  focusOnCell(px, py) {
+    // handle selection of cell; center and zoom in on cell
+
+    const currIndex = globals.canvas.selectedCellIndex;
+    const index = this.setPropForCellAtPos(px, py, currIndex, "selected");
+
+    if (index !== currIndex && index !== -1) {
+      // something new has been clicked
+      const cell = this.cells.find((c) => c.index === index);
+
+      // center
+      startCanvasAnim({
+        startFromCurrScalePos: true,
+        endScale: globals.canvas.scaleToFit * 8,
+        endCanvasX: -(cell.bounds.x + cell.bounds.w / 2),
+        endCanvasY: -(cell.bounds.y + cell.bounds.h / 2),
+      });
+    }
+
+    globals.canvas.selectedCellIndex = index;
   }
 
   // ----------------------------------------------------------------------------

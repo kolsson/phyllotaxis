@@ -59,18 +59,16 @@ const _didLoadPreset = (initial = false) => {
 // ----------------------------------------------------------------------------
 
 let pane;
-const canvasWidth = 800;
-const canvasHeight = 800;
 const uiWidth = 150;
 
 sketch.setup = () => {
-  createCanvas(canvasWidth + uiWidth, canvasHeight);
+  createCanvas(globals.canvas.width + uiWidth, globals.canvas.height);
 
   // canvas
-  xl = -canvasWidth / 2;
-  xr = canvasWidth / 2;
-  yt = -canvasHeight / 2;
-  yb = canvasHeight / 2;
+  xl = -globals.canvas.width / 2;
+  xr = globals.canvas.width / 2;
+  yt = -globals.canvas.height / 2;
+  yb = globals.canvas.height / 2;
 
   // cell controller
   cc = new PCellController({ xl, xr, yt, yb });
@@ -105,18 +103,23 @@ sketch.draw = () => {
 
   // draw our scene
   push();
-  translate(canvasWidth / 2, canvasHeight / 2);
+  translate(globals.canvas.width / 2, globals.canvas.height / 2);
   drawScene();
   pop();
 
   // draw our UI
   push();
   stroke(92);
-  line(canvasWidth, 0, canvasWidth, canvasHeight);
+  line(globals.canvas.width, 0, globals.canvas.width, globals.canvas.height);
 
   noStroke();
   fill(255);
-  rect(canvasWidth + 1, 0, canvasWidth - 1, canvasHeight);
+  rect(
+    globals.canvas.width + 1,
+    0,
+    globals.canvas.width - 1,
+    globals.canvas.height
+  );
   pop();
 
   // EXPERIMENTING
@@ -228,13 +231,16 @@ sketch.mousePressed = async () => {
 
       if (
         mouseX >= 0 &&
-        mouseX < canvasWidth &&
+        mouseX < globals.canvas.width &&
         mouseY >= 0 &&
-        mouseY < canvasHeight
+        mouseY < globals.canvas.height
       ) {
-        cc.focusOnCell(mouseX, mouseY);
+        cc.selectCell(mouseX, mouseY);
       }
-    } else if (mouseX < canvasWidth && mouseY < canvasHeight) {
+    } else if (
+      mouseX < globals.canvas.width &&
+      mouseY < globals.canvas.height
+    ) {
       // begin dragging
 
       draggingCanvas = true;

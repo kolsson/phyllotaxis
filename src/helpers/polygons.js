@@ -31,7 +31,7 @@ export const calcRectBounds = (points) => {
     Number.MIN_SAFE_INTEGER
   );
 
-  return { x, y, w: maxX - x, h: maxY - y };
+  return { x, y, width: maxX - x, height: maxY - y };
 };
 
 // ----------------------------------------------------------------------------

@@ -12,6 +12,10 @@ const globals = {
     scale: 1,
     x: 0,
     y: 0,
+
+    width: 800,
+    height: 800,
+
     scaleToFit: 1, // scale at which all elements fit on screen
 
     selectedCellIndex: -1,

@@ -486,6 +486,21 @@ export default class PCellController {
       c.bounds = calcRectBounds(c.points);
     });
 
+    // find our largest cell bounds
+    const largestW = this.cells.reduce(
+      (acc, c) => Math.max(c.bounds.width, acc),
+      Number.MIN_SAFE_INTEGER
+    );
+
+    const largestH = this.cells.reduce(
+      (acc, c) => Math.max(c.bounds.height, acc),
+      Number.MIN_SAFE_INTEGER
+    );
+
+    // add 4 so we have a little margin
+    this.selectedCellEndScale =
+      globals.canvas.width / (Math.max(largestW, largestH) + 4);
+
     // create our mst lines
     this.mstLines = this.createMstLines(mst);
 
@@ -498,7 +513,7 @@ export default class PCellController {
   }
 
   // ----------------------------------------------------------------------------
-  // public cell over / focus / reset methods
+  // public cell over / select / reset methods
   // ----------------------------------------------------------------------------
 
   resetCellPosProps() {
@@ -528,7 +543,7 @@ export default class PCellController {
     return index;
   }
 
-  focusOnCell(px, py) {
+  selectCell(px, py) {
     // handle selection of cell; center and zoom in on cell
 
     const currIndex = globals.canvas.selectedCellIndex;
@@ -541,9 +556,9 @@ export default class PCellController {
       // center
       startCanvasAnim({
         startFromCurrScalePos: true,
-        endScale: globals.canvas.scaleToFit * 8,
-        endCanvasX: -(cell.bounds.x + cell.bounds.w / 2),
-        endCanvasY: -(cell.bounds.y + cell.bounds.h / 2),
+        endScale: this.selectedCellEndScale,
+        endCanvasX: -(cell.bounds.x + cell.bounds.width / 2),
+        endCanvasY: -(cell.bounds.y + cell.bounds.height / 2),
       });
     }
 
